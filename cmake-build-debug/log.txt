@@ -1,0 +1,4 @@
+12:2:42 development error: main.cpp:24
+12:5:58:  unknown role
+14:17:32:  unknown role
+14:19:51:  unknown role
