@@ -239,7 +239,6 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                     command7 << ";";
                     std::string command_s7 = command7.str();
                     PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
-                    char* avatar_s = PQgetvalue(rs_avatar,0,0);
                     gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
                     err = NO_ERR_PASS;
                     std::stringstream result_stream;
