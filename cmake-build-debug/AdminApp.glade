@@ -709,8 +709,84 @@
             <property name="can_focus">True</property>
             <property name="model">ListWorkers</property>
             <property name="enable_grid_lines">both</property>
+            <signal name="cursor-changed" handler="out_info_worker" swapped="no"/>
             <child internal-child="selection">
-              <object class="GtkTreeSelection"/>
+              <object class="GtkTreeSelection">
+                <property name="mode">multiple</property>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">100</property>
+                <property name="title" translatable="yes">ID</property>
+                <property name="sort_column_id">0</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertexNumber"/>
+                  <attributes>
+                    <attribute name="text">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">200</property>
+                <property name="title" translatable="yes">Фамилия</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertextSurname"/>
+                  <attributes>
+                    <attribute name="text">2</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">200</property>
+                <property name="title" translatable="yes">Имя</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertextName"/>
+                  <attributes>
+                    <attribute name="text">1</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">200</property>
+                <property name="title" translatable="yes">Отчество</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertextFathername"/>
+                  <attributes>
+                    <attribute name="text">3</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">400</property>
+                <property name="title" translatable="yes">Должность</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertextPost"/>
+                  <attributes>
+                    <attribute name="text">4</attribute>
+                  </attributes>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkTreeViewColumn">
+                <property name="fixed_width">400</property>
+                <property name="title" translatable="yes">Подразделение</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertextDivision"/>
+                  <attributes>
+                    <attribute name="text">5</attribute>
+                  </attributes>
+                </child>
+              </object>
             </child>
           </object>
           <packing>

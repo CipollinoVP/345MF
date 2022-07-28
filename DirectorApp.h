@@ -60,6 +60,19 @@ extern "C" void Press_SinglePassButton(GtkWidget *object);
 
 extern "C" void Press_EnterBigOut(GtkWidget *object);
 
+extern "C" void out_info_worker(GtkWidget *object);
+
+struct worker_info{
+    int id = 0;
+    std::string surname;
+    std::string name;
+    std::string fathername;
+    std::string post;
+    std::string division;
+};
+
+std::vector<worker_info> list_w;
+
 void window_destroy_Dapp(GtkWidget *object)
 {
     // завершаем главный цикл приложения
@@ -87,6 +100,8 @@ static void create_window_director()
     if(!(SurnameSearchD = GTK_WIDGET(gtk_builder_get_object(builder, "SurnameSearch"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(NameSearchD = GTK_WIDGET(gtk_builder_get_object(builder, "NameSearch"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(FathernameSearchD = GTK_WIDGET(gtk_builder_get_object(builder, "FathernameSearch"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(PostSearchD = GTK_WIDGET(gtk_builder_get_object(builder, "PostSearch"))))
         g_critical("Ошибка при получении виджета окна\n");
@@ -120,6 +135,8 @@ static void create_window_director()
         g_critical("Ошибка при получении виджета окна\n");
     if(!(DaySkipOfficialD = GTK_WIDGET(gtk_builder_get_object(builder, "DaySkipOfficial"))))
         g_critical("Ошибка при получении виджета окна\n");
+    if(!(ViewWorkersD = GTK_WIDGET(gtk_builder_get_object(builder, "ViewWorkers"))))
+        g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
 
@@ -132,7 +149,162 @@ int director_window(int argc, char *argv[]){
 }
 
 void Press_SearchButton(GtkWidget *object){
-
+    GtkTreeModel *list = gtk_tree_view_get_model(GTK_TREE_VIEW(ViewWorkersD));
+    gtk_list_store_clear(GTK_LIST_STORE(list));
+    std::string AllS(gtk_entry_get_text(GTK_ENTRY(EnterAllSearchD)));
+    std::string SurnameS(gtk_entry_get_text(GTK_ENTRY(SurnameSearchD)));
+    std::string NameS(gtk_entry_get_text(GTK_ENTRY(NameSearchD)));
+    std::string FathernameS(gtk_entry_get_text(GTK_ENTRY(FathernameSearchD)));
+    std::string PostS(gtk_entry_get_text(GTK_ENTRY(PostSearchD)));
+    std::string DivisionS(gtk_entry_get_text(GTK_ENTRY(DivisionSearchD)));
+    std::stringstream query;
+    if (!AllS.empty()) {
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM workers,divisions"
+        <<" WHERE ((division = divisions.id) AND ((surname LIKE '" << AllS <<
+              "%') OR (name LIKE '" << AllS << "%') OR (fathername LIKE '" <<
+              AllS << "%') OR (post LIKE '" << AllS << "%') OR (divisions_name LIKE '" <<
+              AllS << "%')));";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,1));
+            worker.surname = std::string(PQgetvalue(rs_q,i,2));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),&iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),&iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
+    if (!SurnameS.empty()) {
+        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (surname LIKE '" << SurnameS <<
+              "%' );";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,1));
+            worker.surname = std::string(PQgetvalue(rs_q,i,2));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter *iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
+    if (!NameS.empty()) {
+        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (name LIKE '" << NameS <<
+              "%' );";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,1));
+            worker.surname = std::string(PQgetvalue(rs_q,i,2));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter *iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
+    if (!FathernameS.empty()) {
+        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (fathername LIKE '"
+        << FathernameS << "%' );";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,1));
+            worker.surname = std::string(PQgetvalue(rs_q,i,2));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter *iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
+    if (!PostS.empty()) {
+        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (post LIKE '" << PostS <<
+              "%' );";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,1));
+            worker.surname = std::string(PQgetvalue(rs_q,i,2));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter *iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
+    if (!DivisionS.empty()) {
+        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (division LIKE '" << DivisionS <<
+              "%' );";
+        std::string query_s = query.str();
+        PGresult *rs_q = PQexec(conn,query_s.c_str());
+        int n = PQntuples(rs_q);
+        list_w = std::vector<worker_info>(0);
+        for (int i = 0; i < n; ++i) {
+            worker_info worker;
+            worker.id = std::stoi(std::string(PQgetvalue(rs_q,i,0)));
+            worker.name = std::string(PQgetvalue(rs_q,i,2));
+            worker.surname = std::string(PQgetvalue(rs_q,i,1));
+            worker.fathername = std::string(PQgetvalue(rs_q,i,3));
+            worker.post = std::string(PQgetvalue(rs_q,i,4));
+            worker.division = std::string(PQgetvalue(rs_q,i,5));
+            GtkTreeIter *iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+                               2,worker.name.c_str(), 3,worker.fathername.c_str(),
+                               4, worker.post.c_str(),5, worker.division.c_str());
+            list_w.push_back(worker);
+        }
+        return;
+    };
 };
 
 void Press_GetReportButton(GtkWidget *object){
@@ -158,5 +330,15 @@ void Press_SinglePassButton(GtkWidget *object){
 void Press_EnterBigOut(GtkWidget *object){
 
 };
+
+void out_info_worker(GtkWidget *object){
+   GtkTreeIter iter;
+   GtkTreePath *path;
+   GtkTreeViewColumn *column;
+   gtk_tree_view_get_cursor(GTK_TREE_VIEW(ViewWorkersD),&path,&column);
+   gtk_tree_model_get_iter(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewWorkersD)),&iter,path);
+   int a =  *(int*) iter.user_data;
+   std::cout << a << std::endl;
+}
 
 #endif //INC_345MF_DIRECTORAPP_H
