@@ -150,199 +150,348 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
             return "Ошибка QR-кода, не является пропуском предприятия\n";
         } else {
             std::string num_s;
+
             for (int i = SIZE_FACTORY_CODE; i < SIZE_PERSONAL_CODE; ++i) {
                 num_s.push_back(password_worker[i]);
             }
             int num = std::stoi(num_s);
-            std::stringstream command;
-            command << "SELECT status FROM workers WHERE id = ";
-            command << num;
-            command << ";";
-            std::string command_s = command.str();
-            PGresult *res_id = PQexec(conn, command_s.c_str());
-            if (res_id == NULL) {
-                err = ERR_PASS;
-                return "Ошибка: неверный номер пропуска\n";
-            } else {
+            if (num < 10000) {
+                std::stringstream command;
+                command << "SELECT status FROM workers WHERE id = ";
+                command << num;
+                command << ";";
+                std::string command_s = command.str();
+                PGresult *res_id = PQexec(conn, command_s.c_str());
                 char* n_s = PQgetvalue(res_id,0,0);
-                if (n_s[0] == 'f') {
-                    std::stringstream command1;
-                    command1 << "UPDATE workers SET status = true WHERE id = ";
-                    command1 << num;
-                    command1 << ";";
-                    std::string command_s1 = command1.str();
-                    PGresult *rs = PQexec(conn,command_s1.c_str());
-                    if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
-                        printf("Error update status\n");
-                        PQclear(rs);
-                        do_exit(conn);
-                        return "1";
-                    }
-                    std::stringstream  command_autho;
-                    command_autho << "INSERT INTO authorizate (idworker,time_enter,date_enter,status_enter) VALUES ( "
-                    << num << " ,current_timestamp,current_timestamp,true);";
-                    std::string command_autho_s = command_autho.str();
-                    PGresult *rs_a = PQexec(conn,command_autho_s.c_str());
-                    if (PQresultStatus(rs_a) != PGRES_COMMAND_OK) {
-                        printf("Error update status\n");
-                        PQclear(rs_a);
-                        do_exit(conn);
-                        return "1";
-                    }
-                    std::stringstream command2;
-                    command2 << "SELECT surname FROM workers WHERE id = ";
-                    command2 << num;
-                    command2 << ";";
-                    std::string command_s2 = command2.str();
-                    PGresult *rs_surname = PQexec(conn, command_s2.c_str());
-                    char* surname_s = PQgetvalue(rs_surname,0,0);
-                    worker_data.resize(5);
-                    worker_data[0] = std::string(surname_s);
-                    std::stringstream command3;
-                    command3 << "SELECT name FROM workers WHERE id = ";
-                    command3 << num;
-                    command3 << ";";
-                    std::string command_s3 = command3.str();
-                    PGresult *rs_name = PQexec(conn, command_s3.c_str());
-                    char* name_s = PQgetvalue(rs_name,0,0);
-                    worker_data[1] = std::string(name_s);
-                    std::stringstream command4;
-                    command4 << "SELECT fathername FROM workers WHERE id = ";
-                    command4 << num;
-                    command4 << ";";
-                    std::string command_s4 = command4.str();
-                    PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
-                    char* fathername_s = PQgetvalue(rs_fathername,0,0);
-                    worker_data[2] = std::string(fathername_s);
-                    std::stringstream command5;
-                    command5 << "SELECT divisions_name FROM workers, divisions"
-                             << " WHERE ((divisions.id = division) AND (workers.id = ";
-                    command5 << num;
-                    command5 << "));";
-                    std::string command_s5 = command5.str();
-                    PGresult *rs_division = PQexec(conn, command_s5.c_str());
-                    char* division_s = PQgetvalue(rs_division,0,0);
-                    if (division_s != NULL) {
-                        worker_data[3] = std::string(division_s);
-                    } else {worker_data[3] = "";}
-                    std::stringstream command6;
-                    command6 << "SELECT post FROM workers WHERE id = ";
-                    command6 << num;
-                    command6 << ";";
-                    std::string command_s6 = command6.str();
-                    PGresult *rs_post = PQexec(conn, command_s6.c_str());
-                    char* post_s = PQgetvalue(rs_post,0,0);
-                    worker_data[4] = std::string(post_s);
-                    std::stringstream command7;
-                    command7 << "SELECT avatar FROM workers WHERE id = ";
-                    command7 << num;
-                    command7 << ";";
-                    std::string command_s7 = command7.str();
-                    PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
-                    gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
-                    err = NO_ERR_PASS;
-                    std::stringstream result_stream;
-                    result_stream << "Авторизован вход: " << worker_data[1] << " "
-                                  << worker_data[2] << " " <<
-                                  worker_data[0] << "  " << (time(nullptr) % (24*3600))/3600 + 3 <<":"
-                                  << (time(nullptr) % (3600))/60 << ":" << (time(nullptr) % (60))
-                                  << "\n";
-                    return result_stream.str();
+                if (n_s == nullptr) {
+                    err = ERR_PASS;
+                    return "Ошибка: неверный номер пропуска\n";
                 } else {
-                    std::stringstream command1;
-                    command1 << "UPDATE workers SET status = false WHERE id = ";
-                    command1 << num;
-                    command1 << ";";
-                    std::string command_s1 = command1.str();
-                    PGresult *rs = PQexec(conn,command_s1.c_str());
-                    if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
-                        printf("Error update status\n");
-                        PQclear(rs);
-                        do_exit(conn);
-                        return "1";
-                    }
-                    std::stringstream  command_autho;
-                    command_autho << "INSERT INTO authorizate (idworker,time_enter,date_enter,status_enter) VALUES ("
-                                  << num << ",current_timestamp,current_timestamp,false);";
-                    std::string command_autho_s = command_autho.str();
-                    PGresult *rs_a = PQexec(conn,command_autho_s.c_str());
-                    if (PQresultStatus(rs_a) != PGRES_COMMAND_OK) {
-                        for (int i = 0; i < 5; ++i) {
-                            rs_a = PQexec(conn, command_autho_s.c_str());
-                            if (PQresultStatus(rs_a) == PGRES_COMMAND_OK) {
-                                break;
-                            }
+                    if (n_s[0] == 'f') {
+                        std::stringstream command1;
+                        command1 << "UPDATE workers SET status = true WHERE id = ";
+                        command1 << num;
+                        command1 << ";";
+                        std::string command_s1 = command1.str();
+                        PGresult *rs = PQexec(conn,command_s1.c_str());
+                        if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
+                            printf("Error update status\n");
+                            PQclear(rs);
+                            do_exit(conn);
+                            return "1";
                         }
+                        std::stringstream  command_autho;
+                        command_autho << "INSERT INTO authorizate (idworker,time_enter,date_enter,status_enter) VALUES ( "
+                        << num << " ,current_timestamp,current_timestamp,true);";
+                        std::string command_autho_s = command_autho.str();
+                        PGresult *rs_a = PQexec(conn,command_autho_s.c_str());
                         if (PQresultStatus(rs_a) != PGRES_COMMAND_OK) {
                             printf("Error update status\n");
                             PQclear(rs_a);
                             do_exit(conn);
                             return "1";
                         }
-                    }
-                    std::stringstream command2;
-                    command2 << "SELECT surname FROM workers WHERE id = ";
-                    command2 << num;
-                    command2 << ";";
-                    std::string command_s2 = command2.str();
-                    PGresult *rs_surname = PQexec(conn, command_s2.c_str());
-                    char* surname_s = PQgetvalue(rs_surname,0,0);
-                    worker_data.resize(5);
-                    worker_data[0] = std::string(surname_s);
-                    std::stringstream command3;
-                    command3 << "SELECT name FROM workers WHERE id = ";
-                    command3 << num;
-                    command3 << ";";
-                    std::string command_s3 = command3.str();
-                    PGresult *rs_name = PQexec(conn, command_s3.c_str());
-                    char* name_s = PQgetvalue(rs_name,0,0);
-                    worker_data[1] = std::string(name_s);
-                    std::stringstream command4;
-                    command4 << "SELECT fathername FROM workers WHERE id = ";
-                    command4 << num;
-                    command4 << ";";
-                    std::string command_s4 = command4.str();
-                    PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
-                    char* fathername_s = PQgetvalue(rs_fathername,0,0);
-                    worker_data[2] = std::string(fathername_s);
-                    std::stringstream command5;
-                    command5 << "SELECT divisions_name FROM workers, divisions"
+                        std::stringstream command2;
+                        command2 << "SELECT surname FROM workers WHERE id = ";
+                        command2 << num;
+                        command2 << ";";
+                        std::string command_s2 = command2.str();
+                        PGresult *rs_surname = PQexec(conn, command_s2.c_str());
+                        char* surname_s = PQgetvalue(rs_surname,0,0);
+                        worker_data.resize(5);
+                        worker_data[0] = std::string(surname_s);
+                        std::stringstream command3;
+                        command3 << "SELECT name FROM workers WHERE id = ";
+                        command3 << num;
+                        command3 << ";";
+                        std::string command_s3 = command3.str();
+                        PGresult *rs_name = PQexec(conn, command_s3.c_str());
+                        char* name_s = PQgetvalue(rs_name,0,0);
+                        worker_data[1] = std::string(name_s);
+                        std::stringstream command4;
+                        command4 << "SELECT fathername FROM workers WHERE id = ";
+                        command4 << num;
+                        command4 << ";";
+                        std::string command_s4 = command4.str();
+                        PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
+                        char* fathername_s = PQgetvalue(rs_fathername,0,0);
+                        worker_data[2] = std::string(fathername_s);
+                        std::stringstream command5;
+                        command5 << "SELECT divisions_name FROM workers, divisions"
                              << " WHERE ((divisions.id = division) AND (workers.id = ";
-                    command5 << num;
-                    command5 << "));";
-                    std::string command_s5 = command5.str();
-                    PGresult *rs_division = PQexec(conn, command_s5.c_str());
-                    char* division_s = PQgetvalue(rs_division,0,0);
-                    if (division_s != NULL) {
-                        worker_data[3] = std::string(division_s);
-                    } else {worker_data[3] = "";}
-                    std::stringstream command6;
-                    command6 << "SELECT post FROM workers WHERE id = ";
-                    command6 << num;
-                    command6 << ";";
-                    std::string command_s6 = command6.str();
-                    PGresult *rs_post = PQexec(conn, command_s6.c_str());
-                    char* post_s = PQgetvalue(rs_post,0,0);
-                    worker_data[4] = std::string(post_s);
-                    std::stringstream command7;
-                    command7 << "SELECT avatar FROM workers WHERE id = ";
-                    command7 << num;
-                    command7 << ";";
-                    std::string command_s7 = command7.str();
-                    PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
-                    char* avatar_s = PQgetvalue(rs_avatar,0,0);
-                    std::ofstream jp("ava.jpg",std::ios::binary);
-                    jp << std::string(avatar_s);
-                    jp.close();
-                    gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
-                    err = NO_ERR_PASS;
-                    std::stringstream result_stream;
-                    result_stream << "Авторизован выход: " << worker_data[1] <<" "
+                        command5 << num;
+                        command5 << "));";
+                        std::string command_s5 = command5.str();
+                        PGresult *rs_division = PQexec(conn, command_s5.c_str());
+                        char* division_s = PQgetvalue(rs_division,0,0);
+                        if (division_s != NULL) {
+                            worker_data[3] = std::string(division_s);
+                        } else {worker_data[3] = "";}
+                        std::stringstream command6;
+                        command6 << "SELECT post FROM workers WHERE id = ";
+                        command6 << num;
+                        command6 << ";";
+                        std::string command_s6 = command6.str();
+                        PGresult *rs_post = PQexec(conn, command_s6.c_str());
+                        char* post_s = PQgetvalue(rs_post,0,0);
+                        worker_data[4] = std::string(post_s);
+                        std::stringstream command7;
+                        command7 << "SELECT avatar FROM workers WHERE id = ";
+                        command7 << num;
+                        command7 << ";";
+                        std::string command_s7 = command7.str();
+                        PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
+                        gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
+                        err = NO_ERR_PASS;
+                        std::stringstream result_stream;
+                        result_stream << "Авторизован вход: " << worker_data[1] << " "
                                   << worker_data[2] << " " <<
                                   worker_data[0] << "  " << (time(nullptr) % (24*3600))/3600 + 3 <<":"
-                                  << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
+                                  << (time(nullptr) % (3600))/60 << ":" << (time(nullptr) % (60))
                                   << "\n";
-                    return result_stream.str();
+                        return result_stream.str();
+                    } else {
+                        std::stringstream command1;
+                        command1 << "UPDATE workers SET status = false WHERE id = ";
+                        command1 << num;
+                        command1 << ";";
+                        std::string command_s1 = command1.str();
+                        PGresult *rs = PQexec(conn,command_s1.c_str());
+                        if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
+                            printf("Error update status\n");
+                            PQclear(rs);
+                            do_exit(conn);
+                            return "1";
+                        }
+                        std::stringstream  command_autho;
+                        command_autho << "INSERT INTO authorizate (idworker,time_enter,date_enter,status_enter) VALUES ("
+                                  << num << ",current_timestamp,current_timestamp,false);";
+                        std::string command_autho_s = command_autho.str();
+                        PGresult *rs_a = PQexec(conn,command_autho_s.c_str());
+                        if (PQresultStatus(rs_a) != PGRES_COMMAND_OK) {
+                            for (int i = 0; i < 5; ++i) {
+                                rs_a = PQexec(conn, command_autho_s.c_str());
+                                if (PQresultStatus(rs_a) == PGRES_COMMAND_OK) {
+                                    break;
+                                }
+                            }
+                            if (PQresultStatus(rs_a) != PGRES_COMMAND_OK) {
+                                printf("Error update status\n");
+                                PQclear(rs_a);
+                                do_exit(conn);
+                                return "1";
+                            }
+                        }
+                        std::stringstream command2;
+                        command2 << "SELECT surname FROM workers WHERE id = ";
+                        command2 << num;
+                        command2 << ";";
+                        std::string command_s2 = command2.str();
+                        PGresult *rs_surname = PQexec(conn, command_s2.c_str());
+                        char* surname_s = PQgetvalue(rs_surname,0,0);
+                        worker_data.resize(5);
+                        worker_data[0] = std::string(surname_s);
+                        std::stringstream command3;
+                        command3 << "SELECT name FROM workers WHERE id = ";
+                        command3 << num;
+                        command3 << ";";
+                        std::string command_s3 = command3.str();
+                        PGresult *rs_name = PQexec(conn, command_s3.c_str());
+                        char* name_s = PQgetvalue(rs_name,0,0);
+                        worker_data[1] = std::string(name_s);
+                        std::stringstream command4;
+                        command4 << "SELECT fathername FROM workers WHERE id = ";
+                        command4 << num;
+                        command4 << ";";
+                        std::string command_s4 = command4.str();
+                        PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
+                        char* fathername_s = PQgetvalue(rs_fathername,0,0);
+                        worker_data[2] = std::string(fathername_s);
+                        std::stringstream command5;
+                        command5 << "SELECT divisions_name FROM workers, divisions"
+                             << " WHERE ((divisions.id = division) AND (workers.id = ";
+                        command5 << num;
+                        command5 << "));";
+                        std::string command_s5 = command5.str();
+                        PGresult *rs_division = PQexec(conn, command_s5.c_str());
+                        char* division_s = PQgetvalue(rs_division,0,0);
+                        if (division_s != NULL) {
+                            worker_data[3] = std::string(division_s);
+                        } else {worker_data[3] = "";}
+                        std::stringstream command6;
+                        command6 << "SELECT post FROM workers WHERE id = ";
+                        command6 << num;
+                        command6 << ";";
+                        std::string command_s6 = command6.str();
+                        PGresult *rs_post = PQexec(conn, command_s6.c_str());
+                        char* post_s = PQgetvalue(rs_post,0,0);
+                        worker_data[4] = std::string(post_s);
+                        std::stringstream command7;
+                        command7 << "SELECT avatar FROM workers WHERE id = ";
+                        command7 << num;
+                        command7 << ";";
+                        std::string command_s7 = command7.str();
+                        PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
+                        char* avatar_s = PQgetvalue(rs_avatar,0,0);
+                        std::ofstream jp("ava.jpg",std::ios::binary);
+                        jp << std::string(avatar_s);
+                        jp.close();
+                        gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
+                        err = NO_ERR_PASS;
+                        std::stringstream result_stream;
+                        result_stream << "Авторизован выход: " << worker_data[1] <<" "
+                                    << worker_data[2] << " " <<
+                                    worker_data[0] << "  " << (time(nullptr) % (24*3600))/3600 + 3 <<":"
+                                    << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
+                                    << "\n";
+                        return result_stream.str();
+                    }
+                }
+            }
+            else {
+                num = num - 10000;
+                std::stringstream command_check;
+                command_check << "SELECT status_pass FROM single_passes WHERE id =" << num <<";";
+                std::string command_check_s = command_check.str();
+                PGresult *rs_a = PQexec(conn,command_check_s.c_str());
+                char* s = PQgetvalue(rs_a,0,0);
+                if (s == nullptr) {
+                    err = ERR_PASS;
+                    return "Ошибка: неверный номер пропуска\n";
+                } else {
+                    if (s[0] == 'f') {
+                        return "Ошибка: пропуск использован\n";
+                    }
+                    std::stringstream  command_enter;
+                    command_enter << "SELECT status_factory FROM single_passes WHERE id=" << num <<";";
+                    std::string command_enter_s = command_enter.str();
+                    PGresult *rs_b = PQexec(conn,command_enter_s.c_str());
+                    char* st = PQgetvalue(rs_b,0,0);
+                    if (st[0] == 'f') {
+                        std::stringstream command1;
+                        command1 << "UPDATE single_passes SET status_factory = true WHERE id = ";
+                        command1 << num;
+                        command1 << ";";
+                        std::string command_s1 = command1.str();
+                        PGresult *rs = PQexec(conn,command_s1.c_str());
+                        if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
+                            printf("Error update status\n");
+                            PQclear(rs);
+                            do_exit(conn);
+                            return "1";
+                        }
+                        std::stringstream command2;
+                        command2 << "SELECT surname FROM single_passes WHERE id = ";
+                        command2 << num;
+                        command2 << ";";
+                        std::string command_s2 = command2.str();
+                        PGresult *rs_surname = PQexec(conn, command_s2.c_str());
+                        char* surname_s = PQgetvalue(rs_surname,0,0);
+                        worker_data.resize(5);
+                        worker_data[0] = std::string(surname_s);
+                        std::stringstream command3;
+                        command3 << "SELECT name FROM single_passes WHERE id = ";
+                        command3 << num;
+                        command3 << ";";
+                        std::string command_s3 = command3.str();
+                        PGresult *rs_name = PQexec(conn, command_s3.c_str());
+                        char* name_s = PQgetvalue(rs_name,0,0);
+                        worker_data[1] = std::string(name_s);
+                        std::stringstream command4;
+                        command4 << "SELECT fathername FROM single_passes WHERE id = ";
+                        command4 << num;
+                        command4 << ";";
+                        std::string command_s4 = command4.str();
+                        PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
+                        char* fathername_s = PQgetvalue(rs_fathername,0,0);
+                        worker_data[2] = std::string(fathername_s);
+                        worker_data[4] = "Разовый пропуск";
+                        std::stringstream command5;
+                        command5 << "SELECT workers.surname FROM workers, single_passes"
+                                 << " WHERE ((workers.id = single_passes.id_director) AND (single_passes.id = ";
+                        command5 << num;
+                        command5 << "));";
+                        std::string command_s5 = command5.str();
+                        PGresult *rs_division = PQexec(conn, command_s5.c_str());
+                        char* division_s = PQgetvalue(rs_division,0,0);
+                        worker_data[3] = std::string(division_s);
+                        err = NO_ERR_PASS;
+                        std::stringstream result_stream;
+                        result_stream << "Авторизован вход: " << worker_data[1] <<" "
+                                      << worker_data[2] << " " <<
+                                      worker_data[0] << "  " << (time(nullptr) % (24*3600))/3600 + 3 <<":"
+                                      << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
+                                      << "\n";
+                        return result_stream.str();
+                    } else {
+                        std::stringstream command1;
+                        command1 << "UPDATE single_passes SET status_factory = false WHERE id = ";
+                        command1 << num;
+                        command1 << ";";
+                        std::string command_s1 = command1.str();
+                        PGresult *rs = PQexec(conn,command_s1.c_str());
+                        if (PQresultStatus(rs) != PGRES_COMMAND_OK) {
+                            printf("Error update status\n");
+                            PQclear(rs);
+                            do_exit(conn);
+                            return "1";
+                        }
+                        std::stringstream command_cancel;
+                        command_cancel << "UPDATE single_passes SET status_pass = false WHERE id = ";
+                        command_cancel << num;
+                        command_cancel << ";";
+                        std::string command_cancel1 = command_cancel.str();
+                        PGresult *rs_cancel = PQexec(conn,command_cancel1.c_str());
+                        if (PQresultStatus(rs_cancel) != PGRES_COMMAND_OK) {
+                            printf("Error update status\n");
+                            PQclear(rs);
+                            do_exit(conn);
+                            return "1";
+                        }
+                        std::stringstream command2;
+                        command2 << "SELECT surname FROM single_passes WHERE id = ";
+                        command2 << num;
+                        command2 << ";";
+                        std::string command_s2 = command2.str();
+                        PGresult *rs_surname = PQexec(conn, command_s2.c_str());
+                        char* surname_s = PQgetvalue(rs_surname,0,0);
+                        worker_data.resize(5);
+                        worker_data[0] = std::string(surname_s);
+                        std::stringstream command3;
+                        command3 << "SELECT name FROM single_passes WHERE id = ";
+                        command3 << num;
+                        command3 << ";";
+                        std::string command_s3 = command3.str();
+                        PGresult *rs_name = PQexec(conn, command_s3.c_str());
+                        char* name_s = PQgetvalue(rs_name,0,0);
+                        worker_data[1] = std::string(name_s);
+                        std::stringstream command4;
+                        command4 << "SELECT fathername FROM single_passes WHERE id = ";
+                        command4 << num;
+                        command4 << ";";
+                        std::string command_s4 = command4.str();
+                        PGresult *rs_fathername = PQexec(conn, command_s4.c_str());
+                        char* fathername_s = PQgetvalue(rs_fathername,0,0);
+                        worker_data[2] = std::string(fathername_s);
+                        worker_data[4] = "Разовый пропуск";
+                        std::stringstream command5;
+                        command5 << "SELECT workers.surname FROM workers, single_passes"
+                                 << " WHERE ((workers.id = single_passes.id_director) AND (single_passes.id = ";
+                        command5 << num;
+                        command5 << "));";
+                        std::string command_s5 = command5.str();
+                        PGresult *rs_division = PQexec(conn, command_s5.c_str());
+                        char* division_s = PQgetvalue(rs_division,0,0);
+                        worker_data[3] = std::string(division_s);
+                        err = NO_ERR_PASS;
+                        std::stringstream result_stream;
+                        result_stream << "Авторизован выход: " << worker_data[1] <<" "
+                                      << worker_data[2] << " " <<
+                                      worker_data[0] << "  " << (time(nullptr) % (24*3600))/3600 + 3 <<":"
+                                      << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
+                                      << "\n";
+                        return result_stream.str();
+                    }
                 }
             }
         }
