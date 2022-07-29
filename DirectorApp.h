@@ -12,6 +12,8 @@
 #include <vector>
 #include "postgres.h"
 
+#define ERROR_SORT 12
+
 //Виджеты окна директора
 GtkWidget *windowD;
 GtkWidget *EnterAllSearchD;
@@ -37,6 +39,7 @@ GtkWidget *DaySkipOfficialD;
 GtkWidget *SeansesViewD;
 GtkWidget *StartWorkD;
 
+int status_sort_workers = -1;
 
 int finish_program_Dapp = 0;
 
@@ -61,6 +64,8 @@ extern "C" void Press_SinglePassButton(GtkWidget *object);
 extern "C" void Press_EnterBigOut(GtkWidget *object);
 
 extern "C" void out_info_worker(GtkWidget *object);
+
+extern "C" void Sort_workers(GtkWidget *object);
 
 struct worker_info{
     int id = 0;
@@ -332,13 +337,64 @@ void Press_EnterBigOut(GtkWidget *object){
 };
 
 void out_info_worker(GtkWidget *object){
-   GtkTreeIter iter;
-   GtkTreePath *path;
-   GtkTreeViewColumn *column;
-   gtk_tree_view_get_cursor(GTK_TREE_VIEW(ViewWorkersD),&path,&column);
-   gtk_tree_model_get_iter(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewWorkersD)),&iter,path);
-   int a =  *(int*) iter.user_data;
-   std::cout << a << std::endl;
+    GtkTreePath *path;
+    GtkTreeViewColumn *col;
+    gtk_tree_view_get_cursor(GTK_TREE_VIEW(ViewWorkersD),&path,&col);
+    int* a = gtk_tree_path_get_indices(path);
+    if (a == nullptr) {
+        return;
+    }
+    std::stringstream query;
+    query << "SELECT time_enter,date_enter,status_enter,status_memo,depature,arrival FROM " <<
+    "workers,authorizate WHERE ((idworker = workers.id) AND (workers.id ="<< list_w[*a].id <<"))";
+    PGresult *rs_a = PQexec(conn,query.str().c_str());
+    int n = PQntuples(rs_a);
+    gtk_label_set_text(GTK_LABEL(SurnameLabelD),list_w[*a].surname.c_str());
+    gtk_label_set_text(GTK_LABEL(NameLabelD),list_w[*a].name.c_str());
+    gtk_label_set_text(GTK_LABEL(FathernameLabelD),list_w[*a].fathername.c_str());
+    gtk_label_set_text(GTK_LABEL(PostLabelD),list_w[*a].post.c_str());
+    gtk_label_set_text(GTK_LABEL(DivisionLabelD),list_w[*a].division.c_str());
+    //for (int i = 0; i < n; ++i) {
+
+    //}
+}
+
+void Sort_workers(GtkWidget *object){
+    switch (status_sort_workers){
+        case -1:
+            status_sort_workers = 0;
+            for (int i = 0; i < list_w.size()-1; ++i) {
+                for (int j = 0; j < list_w.size()-1; ++j) {
+                    if (list_w[j].id > list_w[j].id) {
+                        worker_info c = list_w[j];
+                        list_w[j] = list_w[j+1];
+                        list_w[j+1] = c;
+                    }
+                }
+            }
+            break;
+        case 0:
+            status_sort_workers = 1;
+            for (int i = 0; i < list_w.size()/2; ++i) {
+                worker_info c = list_w[i];
+                list_w[i] = list_w[list_w.size()-1-i];
+                list_w[list_w.size()-1-i] = c;
+            }
+            break;
+        case 1:
+            status_sort_workers = 0;
+            for (int i = 0; i < list_w.size()/2; ++i) {
+                worker_info c = list_w[i];
+                list_w[i] = list_w[list_w.size()-1-i];
+                list_w[list_w.size()-1-i] = c;
+            }
+            break;
+        default:
+            journal << (time(nullptr) % (24*3600))/3600 + 3 <<":"
+                    << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
+                    << ":  developmet error DirectorApp.h:381" << "\n";
+            exit(ERROR_SORT);
+    }
 }
 
 #endif //INC_345MF_DIRECTORAPP_H
