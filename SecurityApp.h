@@ -33,6 +33,7 @@ GtkWidget *PostLM;
 GtkWidget *DivisionLM;
 GtkWidget *JournalTextM;
 GtkWidget *AvatarImgM;
+GtkWidget *EscapeButtonM;
 
 //Выводимые данные о сотруднике
 std::vector<std::string> personal_data_s;
@@ -127,6 +128,8 @@ static void create_window_checkpoint()
     if(!(DivisionLM = GTK_WIDGET(gtk_builder_get_object(builder, "DivisionL"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(AvatarImgM = GTK_WIDGET(gtk_builder_get_object(builder, "AvatarImg"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(EscapeButtonM = GTK_WIDGET(gtk_builder_get_object(builder, "ExitButton"))))
         g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
@@ -501,6 +504,9 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
 int checkpoint_unit(int argc, char *argv[]){
     gtk_init(&argc, &argv);
     create_window_checkpoint();
+    g_signal_connect(G_OBJECT(windowM), "destroy", G_CALLBACK(window_destroy_security), NULL);
+    g_signal_connect(G_OBJECT(windowM), "destroy-event", G_CALLBACK(window_destroy_security), NULL);
+    g_signal_connect(G_OBJECT(EscapeButtonM), "clicked", G_CALLBACK(window_destroy_security), NULL);
     gtk_widget_show(windowM);
     g_timeout_add(2000,TimerFunc,(gpointer) windowM);
     /* передаём управление GTK+ */

@@ -38,6 +38,15 @@ GtkWidget *TimeOutPersonalD;
 GtkWidget *DaySkipOfficialD;
 GtkWidget *SeansesViewD;
 GtkWidget *StartWorkD;
+GtkWidget *SearchButtonD;
+GtkWidget *GetReportButtonD;
+GtkWidget *official_memo_buttonD;
+GtkWidget *CorrectButtonD;
+GtkWidget *GetPassD;
+GtkWidget *SinglePassButtonD;
+GtkWidget *EscapeButtonD;
+GtkWidget *EnterBigOutD;
+GObject *NumColumnD;
 
 int status_sort_workers = -1;
 
@@ -76,7 +85,27 @@ struct worker_info{
     std::string division;
 };
 
+struct auth{
+    int id = 0;
+    std::string date;
+    std::string time;
+    bool status1{false};
+    std::string status2;
+};
+
+struct session{
+    int id = 0;
+    std::string date1;
+    std::string time1;
+    std::string date2;
+    std::string time2;
+    std::string status1;
+    std::string status2;
+};
+
 std::vector<worker_info> list_w;
+
+std::vector<session> list_sessions;
 
 void window_destroy_Dapp(GtkWidget *object)
 {
@@ -142,12 +171,44 @@ static void create_window_director()
         g_critical("Ошибка при получении виджета окна\n");
     if(!(ViewWorkersD = GTK_WIDGET(gtk_builder_get_object(builder, "ViewWorkers"))))
         g_critical("Ошибка при получении виджета окна\n");
+    if(!(SearchButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "SearchButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(GetReportButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "GetReportButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(official_memo_buttonD = GTK_WIDGET(gtk_builder_get_object(builder, "official_memo_button"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CorrectButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "CorrectButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(GetPassD = GTK_WIDGET(gtk_builder_get_object(builder, "GetPass"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(SinglePassButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "SinglePassButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(EscapeButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "EscapeButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(EnterBigOutD = GTK_WIDGET(gtk_builder_get_object(builder, "EnterBigOut"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(StartWorkD = GTK_WIDGET(gtk_builder_get_object(builder, "StartWork"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(NumColumnD = G_OBJECT(gtk_builder_get_object(builder, "NColumn"))))
+        g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
 
 int director_window(int argc, char *argv[]){
     gtk_init(&argc, &argv);
     create_window_director();
+    g_signal_connect(G_OBJECT(windowD), "destroy", G_CALLBACK(window_destroy_Dapp), NULL);
+    g_signal_connect(G_OBJECT(windowD), "destroy-event", G_CALLBACK(window_destroy_Dapp), NULL);
+    g_signal_connect(G_OBJECT(SearchButtonD), "clicked", G_CALLBACK(Press_SearchButton), NULL);
+    g_signal_connect(G_OBJECT(GetPassD), "clicked", G_CALLBACK(Press_GetPass), NULL);
+    g_signal_connect(G_OBJECT(official_memo_buttonD), "clicked", G_CALLBACK(Press_official_memo_button), NULL);
+    g_signal_connect(G_OBJECT(GetReportButtonD), "clicked", G_CALLBACK(Press_GetReportButton), NULL);
+    g_signal_connect(G_OBJECT(CorrectButtonD), "clicked", G_CALLBACK(Press_Correct_button), NULL);
+    g_signal_connect(G_OBJECT(SinglePassButtonD), "clicked", G_CALLBACK(Press_SinglePassButton), NULL);
+    g_signal_connect(G_OBJECT(EscapeButtonD), "clicked", G_CALLBACK(window_destroy_Dapp), NULL);
+    g_signal_connect(G_OBJECT(EnterBigOutD), "clicked", G_CALLBACK(Press_EnterBigOut), NULL);
+    g_signal_connect(G_OBJECT(ViewWorkersD), "cursor-changed", G_CALLBACK(out_info_worker), NULL);
+    g_signal_connect(G_OBJECT(NumColumnD), "clicked", G_CALLBACK(Sort_workers), NULL);
     gtk_widget_show(windowD);
     gtk_main ();
     return 0;
@@ -345,8 +406,11 @@ void out_info_worker(GtkWidget *object){
         return;
     }
     std::stringstream query;
-    query << "SELECT time_enter,date_enter,status_enter,status_memo,depature,arrival FROM " <<
-    "workers,authorizate WHERE ((idworker = workers.id) AND (workers.id ="<< list_w[*a].id <<"))";
+    std::stringstream  query_1;
+    query << "SELECT authorizate.id,time_enter,date_enter,status_enter,status_memo FROM " <<
+    "workers,authorizate WHERE ((idworker = workers.id) AND (workers.id ="<< list_w[*a].id <<"));";
+    query_1 << "SELECT depature,arrival FROM workers WHERE id = " << list_w[*a].id << ";" ;
+    PGresult *rs_b = PQexec(conn,query_1.str().c_str());
     PGresult *rs_a = PQexec(conn,query.str().c_str());
     int n = PQntuples(rs_a);
     gtk_label_set_text(GTK_LABEL(SurnameLabelD),list_w[*a].surname.c_str());
@@ -354,9 +418,64 @@ void out_info_worker(GtkWidget *object){
     gtk_label_set_text(GTK_LABEL(FathernameLabelD),list_w[*a].fathername.c_str());
     gtk_label_set_text(GTK_LABEL(PostLabelD),list_w[*a].post.c_str());
     gtk_label_set_text(GTK_LABEL(DivisionLabelD),list_w[*a].division.c_str());
-    //for (int i = 0; i < n; ++i) {
-
-    //}
+    char *dep_time = PQgetvalue(rs_b,0,0);
+    std::string dep(dep_time);
+    char *arr_time = PQgetvalue(rs_b,0,1);
+    std::string arr(arr_time);
+    gtk_label_set_text(GTK_LABEL(StartWorkD),dep.c_str());
+    gtk_label_set_text(GTK_LABEL(FinishWorkD),arr.c_str());
+    GtkTreeModel *ls = gtk_tree_view_get_model(GTK_TREE_VIEW(SeansesViewD));
+    gtk_list_store_clear(GTK_LIST_STORE(ls));
+    list_sessions.clear();
+    std::vector<auth> list_auth(0);
+    for (int i = 0; i < n; ++i) {
+        auth one;
+        one.id = std::stoi(std::string(PQgetvalue(rs_a,i,0)));
+        one.date = std::string(PQgetvalue(rs_a,i,2));
+        one.time = std::string(PQgetvalue(rs_a,i,1));
+        if (PQgetvalue(rs_a,i,3)[0] == 'f') {
+            one.status1 = false;
+        } else {
+            one.status1 = true;
+        }
+        list_auth.push_back(one);
+    }
+    int s = (int) list_auth.size();
+    for (int j = 0; j < s-1; ++j) {
+        for (int k = 0; k < s-1; ++k) {
+            if (list_auth[k].id > list_auth[k+1].id) {
+                auth c = list_auth[k];
+                list_auth[k] = list_auth[k+1];
+                list_auth[k+1] = c;
+            }
+        }
+    }
+    for (int i = 0; i < n/2; ++i) {
+        session one;
+        one.id = i;
+        one.date1 = list_auth[2*i].date;
+        one.time1 = list_auth[2*i].time;
+        one.date2 = list_auth[2*i+1].date;
+        one.time2 = list_auth[2*i+1].time;
+        list_sessions.push_back(one);
+        GtkTreeIter *iter;
+        gtk_list_store_append(GTK_LIST_STORE(ls),iter);
+        gtk_list_store_set(GTK_LIST_STORE(ls),iter,0,one.id,1,one.date1.c_str(),
+                           2,one.time1.c_str(), 3,one.status1.c_str(),
+                           4,one.date2.c_str(),5,one.time2.c_str(),6,one.status2.c_str());
+    }
+    if (n % 2 == 1) {
+        session one;
+        one.id = n/2 +1;
+        one.date1 = list_auth[n-1].date;
+        one.time1 = list_auth[n-1].time;
+        list_sessions.push_back(one);
+        GtkTreeIter *iter;
+        gtk_list_store_append(GTK_LIST_STORE(ls),iter);
+        gtk_list_store_set(GTK_LIST_STORE(ls),iter,0,one.id,1,one.date1.c_str(),
+                           2,one.time1.c_str(), 3,one.status1.c_str(),
+                           4,one.date2.c_str(),5,one.time2.c_str(),6,one.status2.c_str());
+    }
 }
 
 void Sort_workers(GtkWidget *object){
@@ -365,7 +484,7 @@ void Sort_workers(GtkWidget *object){
             status_sort_workers = 0;
             for (int i = 0; i < list_w.size()-1; ++i) {
                 for (int j = 0; j < list_w.size()-1; ++j) {
-                    if (list_w[j].id > list_w[j].id) {
+                    if (list_w[j].id > list_w[j+1].id) {
                         worker_info c = list_w[j];
                         list_w[j] = list_w[j+1];
                         list_w[j+1] = c;

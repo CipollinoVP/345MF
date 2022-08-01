@@ -24,6 +24,7 @@ GtkWidget *windowA;
 GtkWidget *LoginEntryA;
 GtkWidget *PasswordEntryA;
 GtkWidget *StatusLoginA;
+GtkWidget *LoginButtonA;
 
 
 int finish_program_lapp = 0;
@@ -33,9 +34,9 @@ static void create_window_login();
 
 int login_window(int argc, char *argv[], int& type_user);
 
-extern "C" void window_destroy_lapp(GtkWidget *object);
+G_MODULE_EXPORT void window_destroy_lapp(GtkWidget *object);
 
-extern "C" void authorizate_button (GtkWidget *object);
+G_MODULE_EXPORT void authorizate_button (GtkWidget *object);
 
 std::string name_role;
 
@@ -60,12 +61,17 @@ static void create_window_login()
         g_critical("Ошибка при получении виджета окна\n");
     if(!(StatusLoginA = GTK_WIDGET(gtk_builder_get_object(builder, "StatusLogin"))))
         g_critical("Ошибка при получении виджета окна\n");
+    if(!(LoginButtonA = GTK_WIDGET(gtk_builder_get_object(builder, "LoginButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
 
 int login_window(int argc, char *argv[], int& type_user){
     gtk_init(&argc, &argv);
     create_window_login();
+    g_signal_connect(G_OBJECT(windowA), "destroy", G_CALLBACK(window_destroy_lapp), NULL);
+    g_signal_connect(G_OBJECT(windowA), "destroy-event", G_CALLBACK(window_destroy_lapp), NULL);
+    g_signal_connect(G_OBJECT(LoginButtonA), "clicked", G_CALLBACK(authorizate_button), NULL);
     gtk_widget_show(windowA);
     gtk_main ();
     if (name_role == "controller") {
@@ -90,7 +96,7 @@ void window_destroy_lapp(GtkWidget *object)
     gtk_main_quit();
 }
 
-extern "C" void authorizate_button (GtkWidget *object){
+void authorizate_button (GtkWidget *object){
     std::string login = gtk_entry_get_text(GTK_ENTRY(LoginEntryA));
     std::string password = gtk_entry_get_text(GTK_ENTRY(PasswordEntryA));
     conn = PQsetdbLogin("localhost","5432","","",

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CLionExternalBuildManager">
+    <target id="91ef96c5-7978-4f24-925f-3087500fc66b" name="-rdynamics" defaultType="TOOL">
+      <configuration id="d5a29d24-b6bb-4cf8-bdf6-3f3d6bc1b29e" name="-rdynamics" toolchainName="MinGW" />
+    </target>
+  </component>
+</project>
