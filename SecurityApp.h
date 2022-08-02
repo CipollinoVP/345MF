@@ -15,6 +15,7 @@
 #include <opencv2/core/utility.hpp>
 #include "opencv2/videoio.hpp"
 #include "postgres.h"
+#include <filesystem>
 
 #define NO_QR -1
 #define EXACT_QR 0
@@ -41,6 +42,8 @@ std::vector<std::string> personal_data_s;
 //Флаг завершения работы программы 
 int finish_program_s = 0;
 
+bool flag_image = false;
+
 //Проверка на QR-код
 void QR_Scan(int& param, std::string& password);
 
@@ -64,6 +67,7 @@ void QR_Scan(int& param, std::string& password) {
     std::string data = qrDecoder.detectAndDecode(frame, bbox, rectifiedImage);
     if (data.length() > 0) {
         param = EXACT_QR;
+        std::cout << '\a';
         password = data;
     } else {
         param = NO_QR;
@@ -170,6 +174,10 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                     err = ERR_PASS;
                     return "Ошибка: неверный номер пропуска\n";
                 } else {
+                    if (flag_image) {
+                        std::filesystem::remove("ava.jpg");
+                    }
+                    flag_image = true;
                     if (n_s[0] == 'f') {
                         std::stringstream command1;
                         command1 << "UPDATE workers SET status = true WHERE id = ";
@@ -227,7 +235,7 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                         std::string command_s5 = command5.str();
                         PGresult *rs_division = PQexec(conn, command_s5.c_str());
                         char* division_s = PQgetvalue(rs_division,0,0);
-                        if (division_s != NULL) {
+                        if (division_s != nullptr) {
                             worker_data[3] = std::string(division_s);
                         } else {worker_data[3] = "";}
                         std::stringstream command6;
@@ -238,8 +246,10 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                         PGresult *rs_post = PQexec(conn, command_s6.c_str());
                         char* post_s = PQgetvalue(rs_post,0,0);
                         worker_data[4] = std::string(post_s);
+                        std::string curr_path = std::filesystem::current_path().string();
                         std::stringstream command7;
-                        command7 << "SELECT avatar FROM workers WHERE id = ";
+                        command7 << "SELECT lo_export(workers.avatar, '" << curr_path
+                        <<"\\ava.jpg') FROM workers WHERE id = ";
                         command7 << num;
                         command7 << ";";
                         std::string command_s7 = command7.str();
@@ -329,16 +339,14 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                         PGresult *rs_post = PQexec(conn, command_s6.c_str());
                         char* post_s = PQgetvalue(rs_post,0,0);
                         worker_data[4] = std::string(post_s);
+                        std::string curr_path = std::filesystem::current_path().string();
                         std::stringstream command7;
-                        command7 << "SELECT avatar FROM workers WHERE id = ";
+                        command7 << "SELECT lo_export(workers.avatar, '" << curr_path
+                                 <<"\\ava.jpg') FROM workers WHERE id = ";
                         command7 << num;
                         command7 << ";";
                         std::string command_s7 = command7.str();
                         PGresult *rs_avatar = PQexec(conn, command_s7.c_str());
-                        char* avatar_s = PQgetvalue(rs_avatar,0,0);
-                        std::ofstream jp("ava.jpg",std::ios::binary);
-                        jp << std::string(avatar_s);
-                        jp.close();
                         gtk_image_set_from_file(GTK_IMAGE(AvatarImgM),"ava.jpg");
                         err = NO_ERR_PASS;
                         std::stringstream result_stream;

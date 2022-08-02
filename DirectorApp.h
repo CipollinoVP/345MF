@@ -117,7 +117,7 @@ void window_destroy_Dapp(GtkWidget *object)
 static void create_window_director()
 {
     GtkBuilder *builder;
-    GError* error = NULL;
+    GError* error = nullptr;
 
     builder = gtk_builder_new();
     if(!gtk_builder_add_from_file(builder, "./AdminApp.glade", &error)){
@@ -125,7 +125,7 @@ static void create_window_director()
         g_error_free(error);
     }
 
-    gtk_builder_connect_signals(builder, NULL);
+    gtk_builder_connect_signals(builder, nullptr);
 
     if(!(windowD = GTK_WIDGET(gtk_builder_get_object(builder, "WindowAdminDirector"))))
         g_critical("Ошибка при получении виджета окна\n");
@@ -190,6 +190,8 @@ static void create_window_director()
     if(!(StartWorkD = GTK_WIDGET(gtk_builder_get_object(builder, "StartWork"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(NumColumnD = G_OBJECT(gtk_builder_get_object(builder, "NColumn"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(SeansesViewD = GTK_WIDGET(gtk_builder_get_object(builder, "SeansesView"))))
         g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
@@ -424,8 +426,8 @@ void out_info_worker(GtkWidget *object){
     std::string arr(arr_time);
     gtk_label_set_text(GTK_LABEL(StartWorkD),dep.c_str());
     gtk_label_set_text(GTK_LABEL(FinishWorkD),arr.c_str());
-    GtkTreeModel *ls = gtk_tree_view_get_model(GTK_TREE_VIEW(SeansesViewD));
-    gtk_list_store_clear(GTK_LIST_STORE(ls));
+    GtkListStore *ls = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(SeansesViewD)));
+    gtk_list_store_clear(ls);
     list_sessions.clear();
     std::vector<auth> list_auth(0);
     for (int i = 0; i < n; ++i) {
@@ -452,27 +454,27 @@ void out_info_worker(GtkWidget *object){
     }
     for (int i = 0; i < n/2; ++i) {
         session one;
-        one.id = i;
+        one.id = i+1;
         one.date1 = list_auth[2*i].date;
         one.time1 = list_auth[2*i].time;
         one.date2 = list_auth[2*i+1].date;
         one.time2 = list_auth[2*i+1].time;
         list_sessions.push_back(one);
-        GtkTreeIter *iter;
-        gtk_list_store_append(GTK_LIST_STORE(ls),iter);
-        gtk_list_store_set(GTK_LIST_STORE(ls),iter,0,one.id,1,one.date1.c_str(),
+        GtkTreeIter iter;
+        gtk_list_store_append(ls,&iter);
+        gtk_list_store_set(ls,&iter,0,one.id,1,one.date1.c_str(),
                            2,one.time1.c_str(), 3,one.status1.c_str(),
                            4,one.date2.c_str(),5,one.time2.c_str(),6,one.status2.c_str());
     }
     if (n % 2 == 1) {
         session one;
-        one.id = n/2 +1;
+        one.id = n/2 +2;
         one.date1 = list_auth[n-1].date;
         one.time1 = list_auth[n-1].time;
         list_sessions.push_back(one);
         GtkTreeIter *iter;
-        gtk_list_store_append(GTK_LIST_STORE(ls),iter);
-        gtk_list_store_set(GTK_LIST_STORE(ls),iter,0,one.id,1,one.date1.c_str(),
+        gtk_list_store_append(ls,iter);
+        gtk_list_store_set(ls,iter,0,one.id,1,one.date1.c_str(),
                            2,one.time1.c_str(), 3,one.status1.c_str(),
                            4,one.date2.c_str(),5,one.time2.c_str(),6,one.status2.c_str());
     }

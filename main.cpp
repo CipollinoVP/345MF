@@ -18,6 +18,9 @@ int main(int argc, char *argv[]){
         case SYS_ADMIN:
             sysadmin_window(argc,argv);
             break;
+        case CLOSE_LOGIN_APP:
+            exit(0);
+            break;
         default:
             journal << (time(nullptr) % (24*3600))/3600 + 3 <<":"
                     << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60)) <<

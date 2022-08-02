@@ -17,6 +17,7 @@
 #define CHECKPOINT 1
 #define DIRECTOR 2
 #define SYS_ADMIN 3
+#define CLOSE_LOGIN_APP 0
 
 
 //Виджеты окна авторизации
@@ -28,6 +29,8 @@ GtkWidget *LoginButtonA;
 
 
 int finish_program_lapp = 0;
+
+bool flag = false;
 
 /* создание окна авторизации*/
 static void create_window_login();
@@ -74,17 +77,21 @@ int login_window(int argc, char *argv[], int& type_user){
     g_signal_connect(G_OBJECT(LoginButtonA), "clicked", G_CALLBACK(authorizate_button), NULL);
     gtk_widget_show(windowA);
     gtk_main ();
-    if (name_role == "controller") {
-        type_user = CHECKPOINT;
-    } else if (name_role == "cheif_admin") {
-        type_user = DIRECTOR;
-    } else if (name_role == "global_admin"){
-        type_user = SYS_ADMIN;
+    if (flag) {
+        if (name_role == "controller") {
+            type_user = CHECKPOINT;
+        } else if (name_role == "cheif_admin") {
+            type_user = DIRECTOR;
+        } else if (name_role == "global_admin") {
+            type_user = SYS_ADMIN;
+        } else {
+            journal << (time(nullptr) % (24 * 3600)) / 3600 + 3 << ":"
+                    << (time(nullptr) % (3600)) / 60 << ":" << (time(nullptr) % (60))
+                    << ":  unknown role" << "\n";
+            exit(ERROR_LOGIN);
+        }
     } else {
-        journal << (time(nullptr) % (24*3600))/3600 + 3 <<":"
-                << (time(nullptr) % (3600))/60  << ":" << (time(nullptr) % (60))
-                << ":  unknown role" << "\n";
-        exit(ERROR_LOGIN);
+        type_user = CLOSE_LOGIN_APP;
     }
     return 0;
 }
@@ -120,6 +127,7 @@ void authorizate_button (GtkWidget *object){
         } else
         {
             name_role = std::string(role_s);
+            flag = true;
             gtk_window_close(GTK_WINDOW(windowA));
         }
     }
