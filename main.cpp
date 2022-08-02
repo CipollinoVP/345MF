@@ -13,7 +13,10 @@ int main(int argc, char *argv[]){
             checkpoint_unit(argc,argv);
             break;
         case DIRECTOR:
-            director_window(argc,argv);
+            director_window(argc,argv,false);
+            break;
+        case MOST_DIRECTOR:
+            director_window(argc,argv,true);
             break;
         case SYS_ADMIN:
             sysadmin_window(argc,argv);

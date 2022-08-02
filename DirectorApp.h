@@ -47,6 +47,9 @@ GtkWidget *SinglePassButtonD;
 GtkWidget *EscapeButtonD;
 GtkWidget *EnterBigOutD;
 GObject *NumColumnD;
+GtkWidget *ApprovalButtonD;
+
+bool m_status = false;
 
 int status_sort_workers = -1;
 
@@ -54,7 +57,7 @@ int finish_program_Dapp = 0;
 
 static void create_window_director();
 
-int director_window(int argc, char *argv[]);
+int director_window(int argc, char *argv[], bool status);
 
 extern "C" void window_destroy_Dapp(GtkWidget *object);
 
@@ -75,6 +78,8 @@ extern "C" void Press_EnterBigOut(GtkWidget *object);
 extern "C" void out_info_worker(GtkWidget *object);
 
 extern "C" void Sort_workers(GtkWidget *object);
+
+extern "C" void ApprovalButton_Press(GtkWidget *object);
 
 struct worker_info{
     int id = 0;
@@ -193,10 +198,16 @@ static void create_window_director()
         g_critical("Ошибка при получении виджета окна\n");
     if(!(SeansesViewD = GTK_WIDGET(gtk_builder_get_object(builder, "SeansesView"))))
         g_critical("Ошибка при получении виджета окна\n");
+    if (m_status) {
+        if(!(ApprovalButtonD = GTK_WIDGET(gtk_builder_get_object(builder, "AppologyButton"))))
+            g_critical("Ошибка при получении виджета окна\n");
+        gtk_widget_set_visible(ApprovalButtonD,true);
+    }
     g_object_unref(builder);
 }
 
-int director_window(int argc, char *argv[]){
+int director_window(int argc, char *argv[], bool status){
+    m_status = status;
     gtk_init(&argc, &argv);
     create_window_director();
     g_signal_connect(G_OBJECT(windowD), "destroy", G_CALLBACK(window_destroy_Dapp), NULL);
@@ -211,6 +222,9 @@ int director_window(int argc, char *argv[]){
     g_signal_connect(G_OBJECT(EnterBigOutD), "clicked", G_CALLBACK(Press_EnterBigOut), NULL);
     g_signal_connect(G_OBJECT(ViewWorkersD), "cursor-changed", G_CALLBACK(out_info_worker), NULL);
     g_signal_connect(G_OBJECT(NumColumnD), "clicked", G_CALLBACK(Sort_workers), NULL);
+    if (m_status) {
+        g_signal_connect(G_OBJECT(ApprovalButtonD), "clicked", G_CALLBACK(ApprovalButton_Press), NULL);
+    }
     gtk_widget_show(windowD);
     gtk_main ();
     return 0;
@@ -254,8 +268,9 @@ void Press_SearchButton(GtkWidget *object){
         return;
     };
     if (!SurnameS.empty()) {
-        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (surname LIKE '" << SurnameS <<
-              "%' );";
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM"
+        <<" workers,divisions WHERE ((division = divisions.id) AND (surname LIKE '" << SurnameS <<
+              "%' ));";
         std::string query_s = query.str();
         PGresult *rs_q = PQexec(conn,query_s.c_str());
         int n = PQntuples(rs_q);
@@ -278,8 +293,10 @@ void Press_SearchButton(GtkWidget *object){
         return;
     };
     if (!NameS.empty()) {
-        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (name LIKE '" << NameS <<
-              "%' );";
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM divisions,workers WHERE"<<
+        " ((division = divisions.id) AND (name LIKE '"
+        << NameS <<
+              "%' ));";
         std::string query_s = query.str();
         PGresult *rs_q = PQexec(conn,query_s.c_str());
         int n = PQntuples(rs_q);
@@ -292,9 +309,9 @@ void Press_SearchButton(GtkWidget *object){
             worker.fathername = std::string(PQgetvalue(rs_q,i,3));
             worker.post = std::string(PQgetvalue(rs_q,i,4));
             worker.division = std::string(PQgetvalue(rs_q,i,5));
-            GtkTreeIter *iter;
-            gtk_list_store_append(GTK_LIST_STORE(list),iter);
-            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+            GtkTreeIter iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),&iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),&iter,0,worker.id,1,worker.surname.c_str(),
                                2,worker.name.c_str(), 3,worker.fathername.c_str(),
                                4, worker.post.c_str(),5, worker.division.c_str());
             list_w.push_back(worker);
@@ -302,8 +319,9 @@ void Press_SearchButton(GtkWidget *object){
         return;
     };
     if (!FathernameS.empty()) {
-        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (fathername LIKE '"
-        << FathernameS << "%' );";
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM divisions,workers WHERE" <<
+                 " ((division = divisions.id) AND (fathername LIKE '"
+        << FathernameS << "%' ));";
         std::string query_s = query.str();
         PGresult *rs_q = PQexec(conn,query_s.c_str());
         int n = PQntuples(rs_q);
@@ -316,9 +334,9 @@ void Press_SearchButton(GtkWidget *object){
             worker.fathername = std::string(PQgetvalue(rs_q,i,3));
             worker.post = std::string(PQgetvalue(rs_q,i,4));
             worker.division = std::string(PQgetvalue(rs_q,i,5));
-            GtkTreeIter *iter;
-            gtk_list_store_append(GTK_LIST_STORE(list),iter);
-            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+            GtkTreeIter iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),&iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),&iter,0,worker.id,1,worker.surname.c_str(),
                                2,worker.name.c_str(), 3,worker.fathername.c_str(),
                                4, worker.post.c_str(),5, worker.division.c_str());
             list_w.push_back(worker);
@@ -326,8 +344,9 @@ void Press_SearchButton(GtkWidget *object){
         return;
     };
     if (!PostS.empty()) {
-        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (post LIKE '" << PostS <<
-              "%' );";
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM divisions,workers WHERE "<<
+                        "((division = divisions.id) AND (post LIKE '" << PostS <<
+              "%' ));";
         std::string query_s = query.str();
         PGresult *rs_q = PQexec(conn,query_s.c_str());
         int n = PQntuples(rs_q);
@@ -340,9 +359,9 @@ void Press_SearchButton(GtkWidget *object){
             worker.fathername = std::string(PQgetvalue(rs_q,i,3));
             worker.post = std::string(PQgetvalue(rs_q,i,4));
             worker.division = std::string(PQgetvalue(rs_q,i,5));
-            GtkTreeIter *iter;
-            gtk_list_store_append(GTK_LIST_STORE(list),iter);
-            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+            GtkTreeIter iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),&iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),&iter,0,worker.id,1,worker.surname.c_str(),
                                2,worker.name.c_str(), 3,worker.fathername.c_str(),
                                4, worker.post.c_str(),5, worker.division.c_str());
             list_w.push_back(worker);
@@ -350,8 +369,9 @@ void Press_SearchButton(GtkWidget *object){
         return;
     };
     if (!DivisionS.empty()) {
-        query << "SELECT id,name,surname,fathername,post,division FROM workers WHERE (division LIKE '" << DivisionS <<
-              "%' );";
+        query << "SELECT workers.id,name,surname,fathername,post,divisions_name FROM divisions,workers WHERE "<<
+        "((division = divisions.id) AND (division_name LIKE '" << DivisionS <<
+              "%' ));";
         std::string query_s = query.str();
         PGresult *rs_q = PQexec(conn,query_s.c_str());
         int n = PQntuples(rs_q);
@@ -364,9 +384,9 @@ void Press_SearchButton(GtkWidget *object){
             worker.fathername = std::string(PQgetvalue(rs_q,i,3));
             worker.post = std::string(PQgetvalue(rs_q,i,4));
             worker.division = std::string(PQgetvalue(rs_q,i,5));
-            GtkTreeIter *iter;
-            gtk_list_store_append(GTK_LIST_STORE(list),iter);
-            gtk_list_store_set(GTK_LIST_STORE(list),iter,0,worker.id,1,worker.surname.c_str(),
+            GtkTreeIter iter;
+            gtk_list_store_append(GTK_LIST_STORE(list),&iter);
+            gtk_list_store_set(GTK_LIST_STORE(list),&iter,0,worker.id,1,worker.surname.c_str(),
                                2,worker.name.c_str(), 3,worker.fathername.c_str(),
                                4, worker.post.c_str(),5, worker.division.c_str());
             list_w.push_back(worker);
@@ -516,6 +536,10 @@ void Sort_workers(GtkWidget *object){
                     << ":  developmet error DirectorApp.h:381" << "\n";
             exit(ERROR_SORT);
     }
+}
+
+void ApprovalButton_Press(GtkWidget *object){
+
 }
 
 #endif //INC_345MF_DIRECTORAPP_H

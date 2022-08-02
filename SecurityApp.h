@@ -35,6 +35,15 @@ GtkWidget *DivisionLM;
 GtkWidget *JournalTextM;
 GtkWidget *AvatarImgM;
 GtkWidget *EscapeButtonM;
+GtkWidget *CancelButtonM;
+GtkWidget *SinglePassButtonM;
+GtkWidget *HandEnterButtonM;
+
+//Виджеты окна разовых пропусков
+GtkWidget *windowP;
+GtkWidget *ViewPassesP;
+GtkWidget *CancelButtonP;
+GtkWidget *AcceptButtonP;
 
 //Выводимые данные о сотруднике
 std::vector<std::string> personal_data_s;
@@ -55,7 +64,37 @@ gboolean TimerFunc(gpointer data);
 
 extern "C" void window_destroy_security(GtkWidget *object);
 
+extern "C" void single_pass_button(GtkWidget *object);
+
+extern "C" void hand_enter_button(GtkWidget *object);
+
+extern "C" void cancel_button_m(GtkWidget *object);
+
+extern "C" void cancel_button_p(GtkWidget *object);
+
+extern "C" void accept_button(GtkWidget *object);
+
+extern "C" void choose_passes(GtkWidget *object);
+
+static void create_window_single_passes();
+
 static void create_window_checkpoint();
+
+void single_pass_refresh();
+
+struct pass_data{
+    int id = 0;
+    std::string surname;
+    std::string name;
+    std::string fathername;
+    std::string doc_type;
+    std::string doc_num;
+    std::string organization;
+    bool status = false;
+    std::string director_name;
+};
+
+std::vector<pass_data> passes_data(0);
 
 void QR_Scan(int& param, std::string& password) {
     cv::VideoCapture cap;
@@ -86,9 +125,9 @@ gboolean TimerFunc(gpointer data)
         int result_authorizate;
         std::string result_report = auhtorizate_appear(result_authorizate,
                                                        personal_password,personal_data_s);
-        std::string journal = gtk_label_get_text(GTK_LABEL(JournalTextM));
-        journal.append(result_report);
-        gtk_label_set_text(GTK_LABEL(JournalTextM),journal.c_str());
+        std::string journalL = gtk_label_get_text(GTK_LABEL(JournalTextM));
+        journalL.append(result_report);
+        gtk_label_set_text(GTK_LABEL(JournalTextM),journalL.c_str());
         if (result_authorizate == NO_ERR_PASS) {
             gtk_label_set_text(GTK_LABEL(SurnameLM),personal_data_s[0].c_str());
             gtk_label_set_text(GTK_LABEL(NameLM),personal_data_s[1].c_str());
@@ -107,7 +146,7 @@ gboolean TimerFunc(gpointer data)
 static void create_window_checkpoint()
 {
     GtkBuilder *builder;
-    GError* error = NULL;
+    GError* error = nullptr;
 
     builder = gtk_builder_new();
     if(!gtk_builder_add_from_file(builder, "./CheckpointApp.glade", &error)){
@@ -115,7 +154,7 @@ static void create_window_checkpoint()
         g_error_free(error);
     }
 
-    gtk_builder_connect_signals(builder, NULL);
+    gtk_builder_connect_signals(builder, nullptr);
 
     if(!(windowM = GTK_WIDGET(gtk_builder_get_object(builder, "window"))))
         g_critical("Ошибка при получении виджета окна\n");
@@ -134,6 +173,31 @@ static void create_window_checkpoint()
     if(!(AvatarImgM = GTK_WIDGET(gtk_builder_get_object(builder, "AvatarImg"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(EscapeButtonM = GTK_WIDGET(gtk_builder_get_object(builder, "ExitButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(SinglePassButtonM = GTK_WIDGET(gtk_builder_get_object(builder, "SinglePassButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(HandEnterButtonM = GTK_WIDGET(gtk_builder_get_object(builder, "HandEnter"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CancelButtonM = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    g_object_unref(builder);
+}
+
+static void create_window_single_passes(){
+    GtkBuilder *builder;
+    GError* error = nullptr;
+    builder = gtk_builder_new();
+    if(!gtk_builder_add_from_file(builder, "./CheckpointApp.glade", &error)){
+        g_critical("Не могу загрузить файл: %s", error->message);
+        g_error_free(error);
+    }
+    if(!(windowP = GTK_WIDGET(gtk_builder_get_object(builder, "Single_Pass_Dialog_window"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(ViewPassesP = GTK_WIDGET(gtk_builder_get_object(builder, "ViewSinglePass"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CancelButtonP = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButtonP"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(AcceptButtonP = GTK_WIDGET(gtk_builder_get_object(builder, "AcceptButton"))))
         g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
@@ -515,11 +579,87 @@ int checkpoint_unit(int argc, char *argv[]){
     g_signal_connect(G_OBJECT(windowM), "destroy", G_CALLBACK(window_destroy_security), NULL);
     g_signal_connect(G_OBJECT(windowM), "destroy-event", G_CALLBACK(window_destroy_security), NULL);
     g_signal_connect(G_OBJECT(EscapeButtonM), "clicked", G_CALLBACK(window_destroy_security), NULL);
+    g_signal_connect(G_OBJECT(SinglePassButtonM), "clicked", G_CALLBACK(single_pass_button), NULL);
+    g_signal_connect(G_OBJECT(HandEnterButtonM), "clicked", G_CALLBACK(hand_enter_button), NULL);
+    g_signal_connect(G_OBJECT(CancelButtonM), "clicked", G_CALLBACK(cancel_button_m), NULL);
     gtk_widget_show(windowM);
     g_timeout_add(2000,TimerFunc,(gpointer) windowM);
     /* передаём управление GTK+ */
     gtk_main ();
     return 0;
+}
+
+void single_pass_button(GtkWidget *object){
+    create_window_single_passes();
+    g_signal_connect(G_OBJECT(CancelButtonP), "clicked", G_CALLBACK(cancel_button_p), NULL);
+    g_signal_connect(G_OBJECT(AcceptButtonP), "clicked", G_CALLBACK(accept_button), NULL);
+    g_signal_connect(G_OBJECT(ViewPassesP), "cursor-changed", G_CALLBACK(choose_passes), NULL);
+    single_pass_refresh();
+    gtk_widget_show(windowP);
+}
+
+void single_pass_refresh(){
+    std::stringstream query;
+    query << "SELECT single_passes.id,"
+    <<"single_passes.surname,single_passes.name,single_passes.fathername,single_passes.type_document" <<
+          ",single_passes.status_factory,single_passes.number_document,workers.name,workers.surname,workers.fathername,"
+          << "single_passes.organization"
+          <<" FROM single_passes,workers WHERE" <<
+          " ((single_passes.status_pass = true) AND (single_passes.id_director = workers.id));";
+    PGresult *res = PQexec(conn,query.str().c_str());
+    int n = PQntuples(res);
+    GtkListStore *list = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewPassesP)));
+    gtk_list_store_clear(list);
+    passes_data.clear();
+    for (int i = 0; i < n; ++i) {
+        pass_data dat;
+        dat.id = std::stoi(std::string(PQgetvalue(res,i,0)));
+        dat.surname = std::string(PQgetvalue(res,i,1));
+        dat.name = std::string(PQgetvalue(res,i,2));
+        dat.fathername = std::string(PQgetvalue(res,i,3));
+        dat.doc_type = std::string(PQgetvalue(res,i,4));
+        dat.doc_num = std::string(PQgetvalue(res,i,5));
+        char* t = PQgetvalue(res,i,6);
+        if (t[0] == 'f') {
+            dat.status = false;
+        } else {
+            dat.status = true;
+        }
+        std::string director_surname(PQgetvalue(res,i,7));
+        std::string director_name(PQgetvalue(res,i,8));
+        std::string director_fathername(PQgetvalue(res,i,9));
+        std::stringstream dir_init;
+        dir_init << director_name.substr(0,1) << "." << director_fathername.substr(0,1) << "." <<
+        director_surname;
+        dat.director_name = dir_init.str();
+        dat.organization = std::string(PQgetvalue(res,i,10));
+        GtkTreeIter iter;
+        gtk_list_store_append(list,&iter);
+        gtk_list_store_set(list,&iter,0,dat.surname.c_str(),1,dat.name.c_str(),
+                           2,dat.fathername.c_str(), 3,dat.doc_type.c_str(),
+                           4, dat.doc_num.c_str(),5,dat.organization.c_str(),6,dat.status,7,dat.director_name.c_str());
+        passes_data.push_back(dat);
+    }
+}
+
+void hand_enter_button(GtkWidget *object){
+
+}
+
+void cancel_button_m(GtkWidget *object){
+
+}
+
+void cancel_button_p(GtkWidget *object){
+    gtk_window_close(GTK_WINDOW(windowP));
+}
+
+void accept_button(GtkWidget *object){
+
+}
+
+void choose_passes(GtkWidget *object){
+
 }
 
 void window_destroy_security(GtkWidget *object)

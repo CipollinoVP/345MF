@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Generated with glade 3.22.2 -->
+<!-- Generated with glade 3.38.2 -->
 <interface>
   <requires lib="gtk+" version="3.20"/>
   <object class="GtkListStore" id="ListSinglePasses">
@@ -16,92 +16,133 @@
       <column type="gchararray"/>
       <!-- column-name Organization -->
       <column type="gchararray"/>
+      <!-- column-name Status -->
+      <column type="gboolean"/>
+      <!-- column-name Director -->
+      <column type="gchararray"/>
     </columns>
   </object>
   <object class="GtkWindow" id="Single_Pass_Dialog_window">
-    <property name="can_focus">False</property>
-    <property name="window_position">center-on-parent</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
+    <property name="can-focus">False</property>
+    <property name="title" translatable="yes">Пропускная система: разовые пропуска</property>
+    <property name="window-position">center-on-parent</property>
+    <property name="icon">Source\zavod-345.jpg</property>
     <child>
       <object class="GtkBox">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can-focus">False</property>
         <property name="orientation">vertical</property>
         <child>
-          <object class="GtkTreeView">
-            <property name="width_request">900</property>
-            <property name="height_request">500</property>
+          <object class="GtkScrolledWindow">
+            <property name="width-request">900</property>
+            <property name="height-request">500</property>
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="model">ListSinglePasses</property>
-            <child internal-child="selection">
-              <object class="GtkTreeSelection"/>
-            </child>
+            <property name="can-focus">True</property>
+            <property name="shadow-type">in</property>
             <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Фамилия</property>
+              <object class="GtkViewport">
+                <property name="visible">True</property>
+                <property name="can-focus">False</property>
                 <child>
-                  <object class="GtkCellRendererText" id="SurnameText"/>
-                  <attributes>
-                    <attribute name="text">0</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Имя</property>
-                <child>
-                  <object class="GtkCellRendererText" id="NameText"/>
-                  <attributes>
-                    <attribute name="text">1</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Отчество</property>
-                <child>
-                  <object class="GtkCellRendererText" id="FathernameText"/>
-                  <attributes>
-                    <attribute name="text">2</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Тип документа</property>
-                <child>
-                  <object class="GtkCellRendererText" id="TypeDocText"/>
-                  <attributes>
-                    <attribute name="text">3</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Номер документа</property>
-                <child>
-                  <object class="GtkCellRendererText" id="NumDocText"/>
-                  <attributes>
-                    <attribute name="text">4</attribute>
-                  </attributes>
-                </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkTreeViewColumn">
-                <property name="title" translatable="yes">Организация</property>
-                <child>
-                  <object class="GtkCellRendererText" id="OrganizationText"/>
-                  <attributes>
-                    <attribute name="text">5</attribute>
-                  </attributes>
+                  <object class="GtkTreeView" id="ViewSinglePass">
+                    <property name="width-request">900</property>
+                    <property name="height-request">500</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="model">ListSinglePasses</property>
+                    <property name="search-column">0</property>
+                    <child internal-child="selection">
+                      <object class="GtkTreeSelection"/>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Фамилия</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="SurnameText"/>
+                          <attributes>
+                            <attribute name="text">0</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Имя</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="NameText"/>
+                          <attributes>
+                            <attribute name="text">1</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Отчество</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="FathernameText"/>
+                          <attributes>
+                            <attribute name="text">2</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Тип документа</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="TypeDocText"/>
+                          <attributes>
+                            <attribute name="text">3</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Номер документа</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="NumDocText"/>
+                          <attributes>
+                            <attribute name="text">4</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Организация</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="OrganizationText"/>
+                          <attributes>
+                            <attribute name="text">5</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">Статус</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="StatusText"/>
+                          <attributes>
+                            <attribute name="text">6</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                    <child>
+                      <object class="GtkTreeViewColumn">
+                        <property name="title" translatable="yes">К кому</property>
+                        <child>
+                          <object class="GtkCellRendererText" id="DirectorName"/>
+                          <attributes>
+                            <attribute name="text">7</attribute>
+                          </attributes>
+                        </child>
+                      </object>
+                    </child>
+                  </object>
                 </child>
               </object>
             </child>
@@ -113,42 +154,43 @@
           </packing>
         </child>
         <child>
+          <!-- n-columns=3 n-rows=1 -->
           <object class="GtkGrid">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="column_homogeneous">True</property>
+            <property name="can-focus">False</property>
+            <property name="column-homogeneous">True</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="CancelButtonP">
                 <property name="label" translatable="yes">Отмена</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="AcceptButton">
                 <property name="label" translatable="yes">Авторизовать проход</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
-                <property name="left_attach">2</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">2</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
           </object>
@@ -162,171 +204,171 @@
     </child>
   </object>
   <object class="GtkWindow" id="window">
-    <property name="can_focus">False</property>
+    <property name="can-focus">False</property>
     <property name="title" translatable="yes">Пропускная система: пункт охраны</property>
-    <property name="default_width">1000</property>
-    <property name="default_height">800</property>
+    <property name="default-width">1000</property>
+    <property name="default-height">800</property>
     <property name="icon">Source\zavod-345.jpg</property>
-    <child type="titlebar">
-      <placeholder/>
-    </child>
     <child>
+      <!-- n-columns=2 n-rows=2 -->
       <object class="GtkGrid">
         <property name="visible">True</property>
-        <property name="can_focus">False</property>
-        <property name="row_homogeneous">True</property>
-        <property name="column_homogeneous">True</property>
+        <property name="can-focus">False</property>
+        <property name="row-homogeneous">True</property>
+        <property name="column-homogeneous">True</property>
         <child>
           <object class="GtkImage" id="AvatarImg">
             <property name="name">AvatarImage</property>
-            <property name="width_request">500</property>
-            <property name="height_request">400</property>
+            <property name="width-request">500</property>
+            <property name="height-request">400</property>
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="stock">gtk-missing-image</property>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">0</property>
+            <property name="left-attach">0</property>
+            <property name="top-attach">0</property>
           </packing>
         </child>
         <child>
+          <!-- n-columns=2 n-rows=5 -->
           <object class="GtkGrid">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
-            <property name="row_homogeneous">True</property>
-            <property name="column_homogeneous">True</property>
+            <property name="can-focus">False</property>
+            <property name="row-homogeneous">True</property>
+            <property name="column-homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="SurnameTitle">
-                <property name="width_request">250</property>
-                <property name="height_request">100</property>
+                <property name="width-request">250</property>
+                <property name="height-request">100</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Фамилия</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="NameTitle">
-                <property name="width_request">250</property>
-                <property name="height_request">100</property>
+                <property name="width-request">250</property>
+                <property name="height-request">100</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Имя</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">1</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="FathernameTitle">
-                <property name="width_request">250</property>
-                <property name="height_request">100</property>
+                <property name="width-request">250</property>
+                <property name="height-request">100</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Отчество</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">2</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="PostTitle">
-                <property name="width_request">250</property>
-                <property name="height_request">100</property>
+                <property name="width-request">250</property>
+                <property name="height-request">100</property>
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Должность</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">3</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">3</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="SurnameL">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">0</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">0</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="NameL">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">1</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">1</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="FathernameL">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">2</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="PostL">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">3</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">3</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="DivisionTitle">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <property name="label" translatable="yes">Подразделение</property>
               </object>
               <packing>
-                <property name="left_attach">0</property>
-                <property name="top_attach">4</property>
+                <property name="left-attach">0</property>
+                <property name="top-attach">4</property>
               </packing>
             </child>
             <child>
               <object class="GtkLabel" id="DivisionL">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
               </object>
               <packing>
-                <property name="left_attach">1</property>
-                <property name="top_attach">4</property>
+                <property name="left-attach">1</property>
+                <property name="top-attach">4</property>
               </packing>
             </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">0</property>
+            <property name="left-attach">1</property>
+            <property name="top-attach">0</property>
           </packing>
         </child>
         <child>
           <object class="GtkBox">
             <property name="visible">True</property>
-            <property name="can_focus">False</property>
+            <property name="can-focus">False</property>
             <property name="orientation">vertical</property>
             <property name="homogeneous">True</property>
             <child>
               <object class="GtkButton" id="CancelButton">
                 <property name="label" translatable="yes">ОТМЕНА: ЧУЖОЙ ПРОПУСК</property>
+                <property name="name">CancelAuthorizate</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -335,11 +377,12 @@
               </packing>
             </child>
             <child>
-              <object class="GtkButton" id="SinglePassesButton">
+              <object class="GtkButton" id="SinglePassButton">
                 <property name="label" translatable="yes">РАЗОВЫЙ ПРОПУСК</property>
+                <property name="name">SinglePassButton</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -350,9 +393,10 @@
             <child>
               <object class="GtkButton" id="HandEnter">
                 <property name="label" translatable="yes">ВВЕСТИ ВРУЧНУЮ</property>
+                <property name="name">HandAuthorizate</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -364,8 +408,8 @@
               <object class="GtkButton" id="ExitButton">
                 <property name="label" translatable="yes">ВЫХОД</property>
                 <property name="visible">True</property>
-                <property name="can_focus">True</property>
-                <property name="receives_default">True</property>
+                <property name="can-focus">True</property>
+                <property name="receives-default">True</property>
               </object>
               <packing>
                 <property name="expand">False</property>
@@ -375,23 +419,23 @@
             </child>
           </object>
           <packing>
-            <property name="left_attach">1</property>
-            <property name="top_attach">1</property>
+            <property name="left-attach">1</property>
+            <property name="top-attach">1</property>
           </packing>
         </child>
         <child>
           <object class="GtkScrolledWindow">
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
-            <property name="shadow_type">in</property>
+            <property name="can-focus">True</property>
+            <property name="shadow-type">in</property>
             <child>
               <object class="GtkViewport">
                 <property name="visible">True</property>
-                <property name="can_focus">False</property>
+                <property name="can-focus">False</property>
                 <child>
                   <object class="GtkLabel" id="JournalText">
                     <property name="visible">True</property>
-                    <property name="can_focus">False</property>
+                    <property name="can-focus">False</property>
                     <property name="label" translatable="yes">
 </property>
                   </object>
@@ -400,8 +444,8 @@
             </child>
           </object>
           <packing>
-            <property name="left_attach">0</property>
-            <property name="top_attach">1</property>
+            <property name="left-attach">0</property>
+            <property name="top-attach">1</property>
           </packing>
         </child>
       </object>

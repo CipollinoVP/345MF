@@ -17,6 +17,7 @@
 #define CHECKPOINT 1
 #define DIRECTOR 2
 #define SYS_ADMIN 3
+#define MOST_DIRECTOR 4
 #define CLOSE_LOGIN_APP 0
 
 
@@ -84,6 +85,8 @@ int login_window(int argc, char *argv[], int& type_user){
             type_user = DIRECTOR;
         } else if (name_role == "global_admin") {
             type_user = SYS_ADMIN;
+        } else if (name_role == "most_cheif_admin") {
+            type_user = MOST_DIRECTOR;
         } else {
             journal << (time(nullptr) % (24 * 3600)) / 3600 + 3 << ":"
                     << (time(nullptr) % (3600)) / 60 << ":" << (time(nullptr) % (60))

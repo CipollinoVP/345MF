@@ -1,3 +1,3 @@
-C:/Users/Student/345MF/cmake-build-debug/CMakeFiles/345MF.dir
-C:/Users/Student/345MF/cmake-build-debug/CMakeFiles/edit_cache.dir
-C:/Users/Student/345MF/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+C:/345MF/cmake-build-debug/CMakeFiles/345MF.dir
+C:/345MF/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/345MF/cmake-build-debug/CMakeFiles/rebuild_cache.dir
