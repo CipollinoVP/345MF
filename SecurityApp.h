@@ -44,12 +44,15 @@ GtkWidget *windowP;
 GtkWidget *ViewPassesP;
 GtkWidget *CancelButtonP;
 GtkWidget *AcceptButtonP;
+GtkWidget *StatusLabelP;
 
 //Выводимые данные о сотруднике
 std::vector<std::string> personal_data_s;
 
 //Флаг завершения работы программы 
 int finish_program_s = 0;
+
+int choosing = -1;
 
 bool flag_image = false;
 
@@ -92,6 +95,7 @@ struct pass_data{
     std::string organization;
     bool status = false;
     std::string director_name;
+    std::string pass_time;
 };
 
 std::vector<pass_data> passes_data(0);
@@ -198,6 +202,8 @@ static void create_window_single_passes(){
     if(!(CancelButtonP = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButtonP"))))
         g_critical("Ошибка при получении виджета окна\n");
     if(!(AcceptButtonP = GTK_WIDGET(gtk_builder_get_object(builder, "AcceptButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(StatusLabelP = GTK_WIDGET(gtk_builder_get_object(builder, "StatusLabelP"))))
         g_critical("Ошибка при получении виджета окна\n");
     g_object_unref(builder);
 }
@@ -424,6 +430,11 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                 }
             }
             else {
+                std::stringstream result_stream;
+                result_stream << "Ошибка: неверный номер пропуска\n";
+                return result_stream.str();
+            }
+                /* {
                 num = num - 10000;
                 std::stringstream command_check;
                 command_check << "SELECT status_pass FROM single_passes WHERE id =" << num <<";";
@@ -568,7 +579,7 @@ std::string auhtorizate_appear(int& err, std::string const& password_worker, std
                         return result_stream.str();
                     }
                 }
-            }
+            }*/
         }
     }
 }
@@ -603,9 +614,10 @@ void single_pass_refresh(){
     query << "SELECT single_passes.id,"
     <<"single_passes.surname,single_passes.name,single_passes.fathername,single_passes.type_document" <<
           ",single_passes.status_factory,single_passes.number_document,workers.name,workers.surname,workers.fathername,"
-          << "single_passes.organization"
+          << "single_passes.organization, single_passes.time_pass"
           <<" FROM single_passes,workers WHERE" <<
-          " ((single_passes.status_pass = true) AND (single_passes.id_director = workers.id));";
+          " ((single_passes.status_pass = true) AND (single_passes.id_director = workers.id) AND "
+          <<"(single_passes.date_pass = now()));";
     PGresult *res = PQexec(conn,query.str().c_str());
     int n = PQntuples(res);
     GtkListStore *list = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewPassesP)));
@@ -619,6 +631,7 @@ void single_pass_refresh(){
         dat.fathername = std::string(PQgetvalue(res,i,3));
         dat.doc_type = std::string(PQgetvalue(res,i,4));
         dat.doc_num = std::string(PQgetvalue(res,i,5));
+        dat.pass_time = std::string(PQgetvalue(res,i,11));
         char* t = PQgetvalue(res,i,6);
         if (t[0] == 'f') {
             dat.status = false;
@@ -637,7 +650,8 @@ void single_pass_refresh(){
         gtk_list_store_append(list,&iter);
         gtk_list_store_set(list,&iter,0,dat.surname.c_str(),1,dat.name.c_str(),
                            2,dat.fathername.c_str(), 3,dat.doc_type.c_str(),
-                           4, dat.doc_num.c_str(),5,dat.organization.c_str(),6,dat.status,7,dat.director_name.c_str());
+                           4, dat.doc_num.c_str(),5,dat.organization.c_str(),6,dat.status,7,dat.director_name.c_str(),
+                           8,dat.pass_time.c_str());
         passes_data.push_back(dat);
     }
 }
@@ -655,11 +669,42 @@ void cancel_button_p(GtkWidget *object){
 }
 
 void accept_button(GtkWidget *object){
-
+    if (choosing == -1) {
+        gtk_label_set_text(GTK_LABEL(StatusLabelP),"Не выбран пропуск");
+        return;
+    }
+    std::stringstream query;
+    query << "SELECT status_factory FROM single_passes WHERE id = " << passes_data[choosing].id << ";";
+    PGresult *res = PQexec(conn,query.str().c_str());
+    char *sf = PQgetvalue(res,0,0);
+    if (sf[0] == 'f') {
+        std::stringstream query1;
+        query1 << "UPDATE single_passes SET pass_using = true WHERE id = "<< passes_data[choosing].id << "; \n" <<
+        "UPDATE single_passes SET status_factory = true WHERE id = "<< passes_data[choosing].id << "; \n" <<
+        "UPDATE single_passes SET enter_time = now() WHERE id = "<< passes_data[choosing].id << ";";
+        PQexec(conn,query1.str().c_str());
+    } else {
+        std::stringstream query1;
+        query1 << "UPDATE single_passes SET pass_using = true WHERE id = "<< passes_data[choosing].id << "; \n" <<
+               "UPDATE single_passes SET status_factory = false WHERE id = "<< passes_data[choosing].id << "; \n" <<
+               "UPDATE single_passes SET status_pass = false WHERE id = "<< passes_data[choosing].id << "; \n" <<
+               "UPDATE single_passes SET exit_time = now() WHERE id = "<< passes_data[choosing].id << ";";
+        PQexec(conn,query1.str().c_str());
+    }
+    single_pass_refresh();
 }
 
 void choose_passes(GtkWidget *object){
-
+    GtkTreePath *path;
+    GtkTreeViewColumn *col;
+    gtk_widget_set_visible(AcceptButtonP,true);
+    gtk_tree_view_get_cursor(GTK_TREE_VIEW(ViewPassesP),&path,&col);
+    int* a = gtk_tree_path_get_indices(path);
+    if (a != nullptr) {
+        choosing = *a;
+    } else {
+        choosing = -1;
+    }
 }
 
 void window_destroy_security(GtkWidget *object)

@@ -49,6 +49,48 @@ GtkWidget *EnterBigOutD;
 GObject *NumColumnD;
 GtkWidget *ApprovalButtonD;
 
+
+//Виджеты окна заказа пропусков
+GtkWidget *windowO;
+GtkWidget *SurnameEnterO;
+GtkWidget *NameEnterO;
+GtkWidget *FathernameEnterO;
+GtkWidget *DocumentTypeEnterO;
+GtkWidget *DocumentNumEnterO;
+GtkWidget *DateEnterO;
+GtkWidget *MonthEnterO;
+GtkWidget *YearEnterO;
+GtkWidget *CancelButtonO;
+GtkWidget *HourEnterO;
+GtkWidget *MinutEnterO;
+GtkWidget *OrganizationEnterO;
+GtkWidget *OrderButtonO;
+GtkWidget *ShowSinglePassesButtonO;
+
+//Необходимое для заказа пропусков
+std::string surname;
+std::string name;
+std::string fathername;
+std::string type_document;
+std::string num_document;
+std::string organization;
+std::string date_pass;
+std::string time_pass;
+int id_director;
+
+//Виджеты диалога
+GtkWidget *DialogH;
+GtkWidget *LabelH;
+GtkWidget *CancelButtonH;
+GtkWidget *AcceptButtonH;
+
+//Виджеты окна согласования пропусков
+GtkWidget *windowI;
+GtkWidget *ViewPassesI;
+GtkWidget *AcceptButtonI;
+GtkWidget *DeclineButtonI;
+GtkWidget *CancelButtonI;
+
 bool m_status = false;
 
 int status_sort_workers = -1;
@@ -56,6 +98,10 @@ int status_sort_workers = -1;
 int finish_program_Dapp = 0;
 
 static void create_window_director();
+
+static void create_window_single_pass_order();
+
+static void create_window_single_pass_accept();
 
 int director_window(int argc, char *argv[], bool status);
 
@@ -80,6 +126,22 @@ extern "C" void out_info_worker(GtkWidget *object);
 extern "C" void Sort_workers(GtkWidget *object);
 
 extern "C" void ApprovalButton_Press(GtkWidget *object);
+
+extern "C" void CancelButtonO_press(GtkWidget *object);
+
+extern "C" void CancelButtonH_press(GtkWidget *object);
+
+extern "C" void Press_OrderButtonO(GtkWidget *object);
+
+extern "C" void ApprovalButtonH_Press(GtkWidget *object);
+
+extern "C" void CancelButtonI_press(GtkWidget *object);
+
+extern "C" void AcceptButtonI_press(GtkWidget *object);
+
+extern "C" void DeclineButtonI_press(GtkWidget *object);
+
+extern "C" void SelectSinglePassI(GtkWidget *object);
 
 struct worker_info{
     int id = 0;
@@ -108,9 +170,28 @@ struct session{
     std::string status2;
 };
 
+struct single_pass{
+    int id = 0;
+    std::string name;
+    std::string surname;
+    std::string fathername;
+    std::string type_document;
+    std::string num_document;
+    std::string organization;
+    std::string date_pass;
+    std::string time_pass;
+    std::string status;
+    std::string date_order;
+    std::string time_order;
+};
+
+std::vector<single_pass> list_single_passes;
+
 std::vector<worker_info> list_w;
 
 std::vector<session> list_sessions;
+
+
 
 void window_destroy_Dapp(GtkWidget *object)
 {
@@ -207,6 +288,9 @@ static void create_window_director()
 }
 
 int director_window(int argc, char *argv[], bool status){
+    std::string query("SELECT id_workers FROM registers_user WHERE login_database = session_user;");
+    PGresult *id_res = PQexec(conn,query.c_str());
+    id_director = std::stoi(std::string(PQgetvalue(id_res,0,0)));
     m_status = status;
     gtk_init(&argc, &argv);
     create_window_director();
@@ -412,7 +496,12 @@ void Press_GetPass(GtkWidget *object){
 };
 
 void Press_SinglePassButton(GtkWidget *object){
-
+    create_window_single_pass_order();
+    g_signal_connect(G_OBJECT(CancelButtonO), "clicked", G_CALLBACK(CancelButtonO_press), NULL);
+    g_signal_connect(G_OBJECT(CancelButtonH), "clicked", G_CALLBACK(CancelButtonH_press), NULL);
+    g_signal_connect(G_OBJECT(OrderButtonO), "clicked", G_CALLBACK(Press_OrderButtonO), NULL);
+    g_signal_connect(G_OBJECT(AcceptButtonH),"clicked", G_CALLBACK(ApprovalButtonH_Press),NULL);
+    gtk_widget_show(windowO);
 };
 
 void Press_EnterBigOut(GtkWidget *object){
@@ -539,6 +628,159 @@ void Sort_workers(GtkWidget *object){
 }
 
 void ApprovalButton_Press(GtkWidget *object){
+    create_window_single_pass_accept();
+    g_signal_connect(G_OBJECT(CancelButtonI), "clicked", G_CALLBACK(CancelButtonI_press), NULL);
+    g_signal_connect(G_OBJECT(ViewPassesI), "cursor-changed", G_CALLBACK(SelectSinglePassI), NULL);
+    g_signal_connect(G_OBJECT(AcceptButtonI), "clicked", G_CALLBACK(AcceptButtonI_press), NULL);
+    g_signal_connect(G_OBJECT(DeclineButtonI),"clicked", G_CALLBACK(DeclineButtonI_press),NULL);
+    std::stringstream query;
+    query << "SELECT * FROM single_passes WHERE pass_using = false;";
+    PGresult *res = PQexec(conn,query.str().c_str());
+    int n = PQntuples(res);
+    for (int i = 0; i < n; ++i) {
+
+    }
+    gtk_widget_show(windowI);
+}
+
+static void create_window_single_pass_accept(){
+    GtkBuilder *builder;
+    GError* error = nullptr;
+
+    builder = gtk_builder_new();
+    if(!gtk_builder_add_from_file(builder, "./AdminApp.glade", &error)){
+        g_critical("Не могу загрузить файл: %s", error->message);
+        g_error_free(error);
+    }
+
+    gtk_builder_connect_signals(builder, nullptr);
+    if(!(windowI = GTK_WIDGET(gtk_builder_get_object(builder, "SinglePassAcceptWindow"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(ViewPassesI = GTK_WIDGET(gtk_builder_get_object(builder, "ViewSinglePass"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(AcceptButtonI = GTK_WIDGET(gtk_builder_get_object(builder, "AcceptButtonI"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(DeclineButtonI = GTK_WIDGET(gtk_builder_get_object(builder, "DeclineButtonI"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CancelButtonI = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButtonI"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    g_object_unref(builder);
+}
+
+static void create_window_single_pass_order(){
+    GtkBuilder *builder;
+    GError* error = nullptr;
+
+    builder = gtk_builder_new();
+    if(!gtk_builder_add_from_file(builder, "./AdminApp.glade", &error)){
+        g_critical("Не могу загрузить файл: %s", error->message);
+        g_error_free(error);
+    }
+
+    gtk_builder_connect_signals(builder, nullptr);
+    if(!(windowO = GTK_WIDGET(gtk_builder_get_object(builder, "SinglePassOrderWindow"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(SurnameEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "SurnameEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(NameEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "NameEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(FathernameEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "FathernameEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(DocumentTypeEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "DocumentTypeEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(DocumentNumEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "DocumentNumEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(OrganizationEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "OrganizationEntryO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(DateEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "DateComboBox"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(MonthEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "MonthComboBox"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(YearEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "YearComboBox"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(OrderButtonO = GTK_WIDGET(gtk_builder_get_object(builder, "OrderButtonO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CancelButtonO = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButtonO"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(ShowSinglePassesButtonO = GTK_WIDGET(gtk_builder_get_object(builder, "ShowSinglePassesButton"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(DialogH = GTK_WIDGET(gtk_builder_get_object(builder, "DialogSinglePass"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(CancelButtonH = GTK_WIDGET(gtk_builder_get_object(builder, "CancelButtonDialog"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(AcceptButtonH = GTK_WIDGET(gtk_builder_get_object(builder, "ButtonOkDialog"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(LabelH = GTK_WIDGET(gtk_builder_get_object(builder, "LabelInfoDialog"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(HourEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "HourComboBox"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    if(!(MinutEnterO = GTK_WIDGET(gtk_builder_get_object(builder, "MinutComboBox"))))
+        g_critical("Ошибка при получении виджета окна\n");
+    g_object_unref(builder);
+}
+
+void CancelButtonO_press(GtkWidget *object){
+    gtk_window_close(GTK_WINDOW(windowO));
+}
+
+void CancelButtonH_press(GtkWidget *object){
+    gtk_widget_destroy(DialogH);
+}
+
+void Press_OrderButtonO(GtkWidget *object){
+    surname = std::string(gtk_entry_get_text(GTK_ENTRY(SurnameEnterO)));
+    name = std::string(gtk_entry_get_text(GTK_ENTRY(NameEnterO)));
+    fathername = std::string(gtk_entry_get_text(GTK_ENTRY(FathernameEnterO)));
+    type_document = std::string(gtk_entry_get_text(GTK_ENTRY(DocumentTypeEnterO)));
+    num_document = std::string(gtk_entry_get_text(GTK_ENTRY(DocumentNumEnterO)));
+    organization = std::string(gtk_entry_get_text(GTK_ENTRY(OrganizationEnterO)));
+    int day = gtk_combo_box_get_active(GTK_COMBO_BOX(DateEnterO))+1;
+    int month = gtk_combo_box_get_active(GTK_COMBO_BOX(MonthEnterO))+1;
+    int year = gtk_combo_box_get_active(GTK_COMBO_BOX(YearEnterO))+2022;
+    int hour = gtk_combo_box_get_active(GTK_COMBO_BOX(HourEnterO));
+    int minute = gtk_combo_box_get_active(GTK_COMBO_BOX(MinutEnterO));
+    std::stringstream pass_date;
+    pass_date << year << "-" << month << "-" << day;
+    date_pass = pass_date.str();
+    std::stringstream pass_time;
+    pass_time << hour << ":" << minute << "+03:00";
+    time_pass = pass_time.str();
+    std::stringstream info_label;
+    info_label << "Подтвердите заказ пропуска\n" << "Фамилия: " << surname << std::endl <<
+    "Имя: " << name << std::endl << "Отчество: " << fathername << std::endl << "Тип документа: " <<
+    type_document << std::endl << "Номер документа: " << num_document << std::endl <<
+    "Организация: " << organization << std::endl << "Дата: " << date_pass << std::endl <<
+    "Время: " << time_pass;
+    gtk_label_set_text(GTK_LABEL(LabelH),info_label.str().c_str());
+    gtk_dialog_run(GTK_DIALOG(DialogH));
+}
+
+void ApprovalButtonH_Press(GtkWidget *object){
+    std::stringstream  query;
+    query << "INSERT INTO single_passes "<< std::endl
+    <<"(surname,name,fathername,type_document,number_document,organization,date_pass,"
+    <<"time_pass,date_query,time_query,id_director)"<< std::endl
+    <<" VALUES ('" << surname << "','" << name <<"','" << fathername << "','" <<
+    type_document << "','" << num_document << "','" << organization << "',now(),now(),'"<< date_pass << "','" <<
+    time_pass << "',"<< id_director << ");";
+    PGresult *rs_insert = PQexec(conn,query.str().c_str());
+    gtk_widget_destroy(DialogH);
+    gtk_window_close(GTK_WINDOW(windowO));
+}
+
+void CancelButtonI_press(GtkWidget *object){
+    gtk_window_close(GTK_WINDOW(windowI));
+}
+
+void AcceptButtonI_press(GtkWidget *object){
+
+}
+
+void DeclineButtonI_press(GtkWidget *object){
+
+}
+
+void SelectSinglePassI(GtkWidget *object){
 
 }
 

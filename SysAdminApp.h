@@ -52,6 +52,8 @@ static void create_window_sys()
 int sysadmin_window(int argc, char *argv[]){
     gtk_init(&argc, &argv);
     create_window_sys();
+    g_signal_connect(G_OBJECT(windowS), "destroy", G_CALLBACK(window_destroy_SAapp), NULL);
+    g_signal_connect(G_OBJECT(windowS), "destroy-event", G_CALLBACK(window_destroy_SAapp), NULL);
     gtk_widget_show(windowS);
     gtk_main ();
     return 0;

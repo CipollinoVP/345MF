@@ -44,6 +44,8 @@ G_MODULE_EXPORT void authorizate_button (GtkWidget *object);
 
 std::string name_role;
 
+std::string login;
+
 static void create_window_login()
 {
     GtkBuilder *builder;
@@ -107,7 +109,7 @@ void window_destroy_lapp(GtkWidget *object)
 }
 
 void authorizate_button (GtkWidget *object){
-    std::string login = gtk_entry_get_text(GTK_ENTRY(LoginEntryA));
+    login = gtk_entry_get_text(GTK_ENTRY(LoginEntryA));
     std::string password = gtk_entry_get_text(GTK_ENTRY(PasswordEntryA));
     conn = PQsetdbLogin("localhost","5432","","",
                         "345MF",login.c_str(),password.c_str());
