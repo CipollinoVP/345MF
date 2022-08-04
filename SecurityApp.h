@@ -93,7 +93,7 @@ struct pass_data{
     std::string doc_type;
     std::string doc_num;
     std::string organization;
-    bool status = false;
+    std::string status;
     std::string director_name;
     std::string pass_time;
 };
@@ -617,7 +617,7 @@ void single_pass_refresh(){
           << "single_passes.organization, single_passes.time_pass"
           <<" FROM single_passes,workers WHERE" <<
           " ((single_passes.status_pass = true) AND (single_passes.id_director = workers.id) AND "
-          <<"(single_passes.date_pass = now()));";
+          <<"(single_passes.date_pass = current_date));";
     PGresult *res = PQexec(conn,query.str().c_str());
     int n = PQntuples(res);
     GtkListStore *list = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewPassesP)));
@@ -630,16 +630,16 @@ void single_pass_refresh(){
         dat.name = std::string(PQgetvalue(res,i,2));
         dat.fathername = std::string(PQgetvalue(res,i,3));
         dat.doc_type = std::string(PQgetvalue(res,i,4));
-        dat.doc_num = std::string(PQgetvalue(res,i,5));
+        dat.doc_num = std::string(PQgetvalue(res,i,6));
         dat.pass_time = std::string(PQgetvalue(res,i,11));
-        char* t = PQgetvalue(res,i,6);
+        char* t = PQgetvalue(res,i,5);
         if (t[0] == 'f') {
-            dat.status = false;
+            dat.status = "Вне завода";
         } else {
-            dat.status = true;
+            dat.status = "На предприятии";
         }
-        std::string director_surname(PQgetvalue(res,i,7));
-        std::string director_name(PQgetvalue(res,i,8));
+        std::string director_surname(PQgetvalue(res,i,8));
+        std::string director_name(PQgetvalue(res,i,7));
         std::string director_fathername(PQgetvalue(res,i,9));
         std::stringstream dir_init;
         dir_init << director_name.substr(0,1) << "." << director_fathername.substr(0,1) << "." <<
@@ -650,7 +650,8 @@ void single_pass_refresh(){
         gtk_list_store_append(list,&iter);
         gtk_list_store_set(list,&iter,0,dat.surname.c_str(),1,dat.name.c_str(),
                            2,dat.fathername.c_str(), 3,dat.doc_type.c_str(),
-                           4, dat.doc_num.c_str(),5,dat.organization.c_str(),6,dat.status,7,dat.director_name.c_str(),
+                           4, dat.doc_num.c_str(),5,dat.organization.c_str(),6,dat.status.c_str(),
+                           7,dat.director_name.c_str(),
                            8,dat.pass_time.c_str());
         passes_data.push_back(dat);
     }

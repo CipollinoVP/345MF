@@ -5,6 +5,7 @@
 
 
 int main(int argc, char *argv[]){
+    setlocale(LC_ALL, "Russian");
     journal_init();
     int type_user;
     login_window(argc,argv,type_user);

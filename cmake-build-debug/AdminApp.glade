@@ -301,6 +301,7 @@
                     <property name="can-focus">True</property>
                     <property name="model">ListPassesMostDirector</property>
                     <property name="search-column">0</property>
+                    <property name="activate-on-single-click">True</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection"/>
                     </child>

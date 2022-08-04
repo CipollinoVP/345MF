@@ -97,6 +97,8 @@ int status_sort_workers = -1;
 
 int finish_program_Dapp = 0;
 
+int select_single_pass = -1;
+
 static void create_window_director();
 
 static void create_window_single_pass_order();
@@ -183,6 +185,7 @@ struct single_pass{
     std::string status;
     std::string date_order;
     std::string time_order;
+    std::string director_name;
 };
 
 std::vector<single_pass> list_single_passes;
@@ -191,6 +194,7 @@ std::vector<worker_info> list_w;
 
 std::vector<session> list_sessions;
 
+void list_passes_apology_refresh();
 
 
 void window_destroy_Dapp(GtkWidget *object)
@@ -581,9 +585,9 @@ void out_info_worker(GtkWidget *object){
         one.date1 = list_auth[n-1].date;
         one.time1 = list_auth[n-1].time;
         list_sessions.push_back(one);
-        GtkTreeIter *iter;
-        gtk_list_store_append(ls,iter);
-        gtk_list_store_set(ls,iter,0,one.id,1,one.date1.c_str(),
+        GtkTreeIter iter;
+        gtk_list_store_append(ls,&iter);
+        gtk_list_store_set(ls,&iter,0,one.id,1,one.date1.c_str(),
                            2,one.time1.c_str(), 3,one.status1.c_str(),
                            4,one.date2.c_str(),5,one.time2.c_str(),6,one.status2.c_str());
     }
@@ -633,14 +637,54 @@ void ApprovalButton_Press(GtkWidget *object){
     g_signal_connect(G_OBJECT(ViewPassesI), "cursor-changed", G_CALLBACK(SelectSinglePassI), NULL);
     g_signal_connect(G_OBJECT(AcceptButtonI), "clicked", G_CALLBACK(AcceptButtonI_press), NULL);
     g_signal_connect(G_OBJECT(DeclineButtonI),"clicked", G_CALLBACK(DeclineButtonI_press),NULL);
+    list_passes_apology_refresh();
+    gtk_widget_show(windowI);
+}
+
+void list_passes_apology_refresh(){
     std::stringstream query;
+    GtkListStore *ListApology = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(ViewPassesI)));
+    gtk_list_store_clear(ListApology);
     query << "SELECT * FROM single_passes WHERE pass_using = false;";
     PGresult *res = PQexec(conn,query.str().c_str());
     int n = PQntuples(res);
+    list_single_passes.clear();
     for (int i = 0; i < n; ++i) {
-
+        single_pass pass;
+        pass.surname = std::string(PQgetvalue(res,i,0));
+        pass.name = std::string(PQgetvalue(res,i,1));
+        pass.fathername = std::string(PQgetvalue(res,i,2));
+        pass.id = std::stoi(std::string(PQgetvalue(res,i,3)));
+        pass.type_document = std::string(PQgetvalue(res,i,6));
+        pass.num_document = std::string(PQgetvalue(res,i,7));
+        char *s = PQgetvalue(res,i,8);
+        if (s[0] == 'f') {
+            pass.status = "Не согласовано";
+        } else {
+            pass.status = "Согласовано";
+        }
+        pass.organization = std::string(PQgetvalue(res,i,9));
+        pass.date_pass = std::string(PQgetvalue(res,i,12));
+        pass.time_pass = std::string(PQgetvalue(res,i,13));
+        pass.date_order = std::string(PQgetvalue(res,i,10));
+        pass.time_order = std::string(PQgetvalue(res,i,11));
+        int id_order_director = std::stoi(std::string(PQgetvalue(res,i,5)));
+        std::stringstream query1;
+        query1 << "SELECT surname,name,fathername FROM workers WHERE id =" << id_order_director << ";";
+        PGresult *res1 = PQexec(conn,query1.str().c_str());
+        std::stringstream director_name_s;
+        director_name_s << std::string(PQgetvalue(res1,0,1)).substr(0,1) << "."
+                        << std::string(PQgetvalue(res1,0,2)).substr(0,1) << ". "
+                        << std::string(PQgetvalue(res1,0,0));
+        pass.director_name = director_name_s.str();
+        list_single_passes.push_back(pass);
+        GtkTreeIter iter;
+        gtk_list_store_append(ListApology,&iter);
+        gtk_list_store_set(ListApology,&iter,0,pass.surname.c_str(),1,pass.name.c_str(),2,pass.fathername.c_str(),
+                           3,pass.type_document.c_str(),4,pass.num_document.c_str(),5,pass.organization.c_str(),
+                           6,pass.status.c_str(),7,pass.director_name.c_str(),8,pass.date_pass.c_str(),
+                           9,pass.time_pass.c_str(),10,pass.date_order.c_str(),11,pass.time_order.c_str());
     }
-    gtk_widget_show(windowI);
 }
 
 static void create_window_single_pass_accept(){
@@ -761,9 +805,15 @@ void ApprovalButtonH_Press(GtkWidget *object){
     <<"(surname,name,fathername,type_document,number_document,organization,date_pass,"
     <<"time_pass,date_query,time_query,id_director)"<< std::endl
     <<" VALUES ('" << surname << "','" << name <<"','" << fathername << "','" <<
-    type_document << "','" << num_document << "','" << organization << "',now(),now(),'"<< date_pass << "','" <<
-    time_pass << "',"<< id_director << ");";
-    PGresult *rs_insert = PQexec(conn,query.str().c_str());
+    type_document << "','" << num_document << "','" << organization << "','"<< date_pass << "','" <<
+    time_pass << "',now(),now(),"<< id_director << ");";
+    PQexec(conn,query.str().c_str());
+    if (m_status) {
+        std::stringstream query1;
+        query1 << "UPDATE single_passes SET status_pass = true WHERE ((name = '" << name
+        << "') AND (surname = '" << surname << "') AND (date_pass ='" << date_pass << "'));";
+        PQexec(conn,query1.str().c_str());
+    }
     gtk_widget_destroy(DialogH);
     gtk_window_close(GTK_WINDOW(windowO));
 }
@@ -773,15 +823,37 @@ void CancelButtonI_press(GtkWidget *object){
 }
 
 void AcceptButtonI_press(GtkWidget *object){
-
+    if (select_single_pass == -1) {
+        return;
+    }
+    std::stringstream query;
+    query << "UPDATE single_passes SET status_pass = true  WHERE id = " <<
+    list_single_passes[select_single_pass].id << ";";
+    PQexec(conn,query.str().c_str());
+    list_passes_apology_refresh();
 }
 
 void DeclineButtonI_press(GtkWidget *object){
-
+    if (select_single_pass == -1) {
+        return;
+    }
+    std::stringstream query;
+    query << "DELETE FROM single_passes WHERE id = " <<
+          list_single_passes[select_single_pass].id << ";";
+    PQexec(conn,query.str().c_str());
+    list_passes_apology_refresh();
 }
 
 void SelectSinglePassI(GtkWidget *object){
-
+    GtkTreePath *path;
+    GtkTreeViewColumn *col;
+    gtk_tree_view_get_cursor(GTK_TREE_VIEW(ViewPassesI),&path,&col);
+    int* a = gtk_tree_path_get_indices(path);
+    if (a == nullptr) {
+        select_single_pass = -1;
+        return;
+    }
+    select_single_pass = *a;
 }
 
 #endif //INC_345MF_DIRECTORAPP_H
