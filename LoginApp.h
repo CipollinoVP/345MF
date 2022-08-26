@@ -81,7 +81,7 @@ int login_window(int argc, char *argv[], int& type_user){
     gtk_widget_show(windowA);
     gtk_main ();
     if (flag) {
-        if (name_role == "controller") {
+        if ((name_role == "controller_by_walk") || (name_role == "controller_car")) {
             type_user = CHECKPOINT;
         } else if (name_role == "cheif_admin") {
             type_user = DIRECTOR;
